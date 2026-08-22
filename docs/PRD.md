@@ -175,12 +175,12 @@ Grouped by module. Each module is part of the shared core; club-type templates d
 - **Financial trust** — clubs are dealing with real money; a bug or data loss around contributions is reputationally severe. *Mitigation:* strong audit logging, no direct money movement in MVP (tracking only, not custody).
 - **Multi-tenancy bugs** — a data isolation bug is catastrophic (one club seeing another's data). *Mitigation:* enforce tenant scoping at the persistence layer with tests specifically targeting cross-tenant access.
 - **Adoption friction** — non-technical committee members may resist moving off WhatsApp/Excel. *Mitigation:* prioritise low-friction onboarding and mobile-first member experience.
-- **Coordination risk (two devs + AI coding agents)** — with two developers each driving agentic tools (Claude Code/Codex), there's a real risk of inconsistent architecture, duplicated work, or conflicting changes if agents aren't working from the same shared context. *Mitigation:* strict module ownership aligned to the modular monolith boundaries, a shared master prompt both developers' agents are seeded with, and a synced project-state document updated as work lands (see the companion Team Workflow & AI Agent Collaboration Guide).
+- **Coordination risk (two devs + AI coding agents)** — with two developers each driving agentic tools (Claude Code/Codex), there's a real risk of inconsistent architecture, duplicated work, or conflicting changes if agents aren't working from the same shared context. *Mitigation:* temporary full-stack feature ownership aligned to the modular monolith boundaries, a shared master prompt both developers' agents are seeded with, and a synced project-state document updated as work lands (see the companion Team Workflow & AI Agent Collaboration Guide).
 
 ### Assumptions
 - Initial target market is South African membership clubs, starting with stokvels/investment clubs.
 - MVP does not need to move real money — contribution tracking is sufficient for v1 trust-building.
-- A small team of **two developers** is building this, using agentic engineering tools (Claude Code / Codex) to accelerate delivery, so build order must prioritise clear module ownership and staying in sync alongside learning and incremental delivery.
+- A small team of **two developers** is building this, using agentic engineering tools (Claude Code / Codex) to accelerate delivery, so build order must prioritise clear ownership of each active full-stack feature and staying in sync alongside learning and incremental delivery.
 
 ---
 

@@ -80,7 +80,7 @@
 ```
 
 **Why a modular monolith and not microservices from day one?**
-At this stage (single developer, unvalidated product), microservices add operational overhead (service discovery, distributed transactions, network failure handling, multiple deployment pipelines) without a corresponding benefit — there's no scale problem to solve yet. A modular monolith with clean internal boundaries gives most of the *organisational* benefit of microservices (clear ownership, low coupling) while keeping *operational* complexity low. When/if a specific module (likely Notifications or Contributions under high tenant load) needs to scale independently, it can be extracted because the boundary already exists in code.
+At this stage (a two-developer team with an unvalidated product), microservices add operational overhead (service discovery, distributed transactions, network failure handling, multiple deployment pipelines) without a corresponding benefit — there's no scale problem to solve yet. A modular monolith with clean internal boundaries gives most of the *organisational* benefit of microservices (clear ownership, low coupling) while keeping *operational* complexity low. When/if a specific module (likely Notifications or Contributions under high tenant load) needs to scale independently, it can be extracted because the boundary already exists in code.
 
 ---
 
@@ -185,10 +185,10 @@ Roles are configurable per club type (a "Treasurer" role in a stokvel maps to di
 
 Since this is being built by **two developers**, each using agentic coding tools (Claude Code / Codex), the module boundaries defined in §1 aren't just a future-microservices nicety — they're the mechanism that lets two people (and their AI agents) work in parallel without constantly colliding.
 
-**Ownership split, by module:**
-- Each backend module (Identity/Tenancy, Members, Contributions, Meetings, Voting, Documents, Notifications, Audit, ClubTypeConfig) has **one clear owner** at any given time. The other developer can read/consume it via its defined service interface, but doesn't modify it without a heads-up.
-- Frontend feature folders mirror this same split (`/features/members` owner = backend Members owner, etc.) so one person can reasonably own a vertical slice (API + UI) for a feature area.
-- Shared/cross-cutting concerns (auth, tenant context, DTO/API conventions, the design system) are **not** owned by either individual — changes to these go through a quick sync/review between both of you before an agent is set loose on them, since both codebases depend on them.
+**Ownership rotates by full-stack feature:**
+- One developer owns each active feature end-to-end across its backend module and matching frontend feature folder. Ownership rotates between Samukelo and Thembani according to the sequence in `TEAM_WORKFLOW.md` §7 so both developers gain experience across the full stack.
+- While a feature is active, its owner has temporary ownership of the affected module paths. The other developer can read and consume the module through its public application-service interfaces, but coordinates before modifying those paths. Ownership returns to the team when the feature lands; it is not a permanent module assignment.
+- Shared/cross-cutting concerns (auth, tenant context, DTO/API conventions, the design system) are **not** owned by either individual — changes to these require a quick sync and review between both developers before implementation, since both codebases depend on them.
 
 This is also why the **API design decision in §5** (resolving tenant from the JWT, not the URL) matters for two-dev safety: it removes a whole class of "did you remember to scope this query" bugs that are easy for an agent working on an unfamiliar module to introduce.
 
