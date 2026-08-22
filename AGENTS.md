@@ -64,11 +64,16 @@ either of you can pick up the other's feature if it makes sense.
 
 ## Current Build Status
 - Phase: Foundations
-- Landed: #0 — Repo scaffolding (/backend Spring Boot skeleton,
-  /frontend Vite+React skeleton created; Docker Compose + CI still to
-  confirm — verify before marking #0 fully done)
-- In progress: #1 — Frontend app shell (Samukelo)
-- Next up: #2 — Auth (Thembani), depends on #0 and #1
+- Completed foundation work: repository flattened and initialized on
+  `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
+  created.
+- Partially complete: #0 — Repo scaffolding. Still required: backend
+  health endpoint, Docker Compose for PostgreSQL/backend/frontend, and a
+  GitHub Actions build/lint/test workflow.
+- In progress: #1 — Frontend app shell (Samukelo). Tailwind CSS,
+  shadcn/ui configuration, and initial UI components exist; layout,
+  routing, navigation, and placeholder feature pages remain.
+- Next up: #2 — Auth (Thembani), after #0 and #1 are complete.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
