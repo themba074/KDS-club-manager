@@ -1,0 +1,79 @@
+# KDS Club Manager — Agent Context
+
+## Project
+KDS Club Manager is a configurable, multi-tenant Club Operating System for
+membership organisations (stokvels/investment clubs, sports clubs, burial
+societies, business associations, etc.). One core platform; club-type
+templates configure which modules/rules are active per club. See
+docs/PRD.md and docs/TECH_SPEC.md for full detail — this file is a
+summary for agent context, not the full spec.
+
+## Stack
+- Frontend: React 18 + TypeScript + Vite, Zustand (client state), TanStack
+  Query (server state), React Router, Tailwind CSS, shadcn/ui
+- Backend: Java 21, Spring Boot 3.x, Spring Security (JWT), Spring Data
+  JPA, MapStruct, Flyway
+- Database: PostgreSQL — shared schema, tenant-scoped via `club_id` +
+  enforced TenantContext (see docs/TECH_SPEC.md §3). NEVER write a query
+  or repository method that skips tenant scoping.
+- Storage: Supabase Storage via FileStorageService abstraction
+- Deployment: Docker / Docker Compose, GitHub Actions CI
+
+## Architecture
+- Modular monolith. Modules: Identity/Tenancy, Members, Contributions,
+  Meetings, Voting, Documents, Notifications, Audit, ClubTypeConfig.
+- Modules talk to each other only through their public application-service
+  interfaces — never reach into another module's repositories directly.
+- API is REST, versioned (/api/v1), tenant resolved from JWT (not URL).
+- Permissions (not role names) are what controllers check
+  (`@PreAuthorize`); role→permission mapping lives in ClubTypeConfig.
+
+## How We Want You To Work
+We are two developers (Samukelo and Thembani) learning as we build this,
+not just outsourcing implementation. For any non-trivial task:
+1. Explain what you're about to build and why, in plain terms.
+2. Explain the alternatives you considered and why you're recommending
+   this approach.
+3. Flag trade-offs and anything we should sanity-check.
+4. Wait for explicit approval before writing code.
+Trivial/mechanical tasks (boilerplate matching an existing pattern, a
+straightforward CRUD endpoint identical in shape to one already built)
+can skip the full explanation, but still summarize what you did
+afterward. When in doubt, explain first.
+
+## Coding Standards
+- SOLID, composition over inheritance, DTOs separate from entities
+  (MapStruct), Bean Validation on all inbound DTOs.
+- Meaningful names, no abbreviations. Consistent folder structure per
+  module on both frontend and backend.
+- Every new backend endpoint: unit tests for service logic + integration
+  test that verifies tenant isolation (a cross-tenant request must fail).
+- Every new frontend feature: components under /features/<module>,
+  server state via TanStack Query hooks, no direct fetch() calls in
+  components.
+
+## Feature Assignment
+Full-stack ownership rotates per feature between Samukelo and Thembani —
+see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
+filled-in prompt for each one. Assignment is a default, not a rule —
+either of you can pick up the other's feature if it makes sense.
+
+- Current feature: #1 — Frontend App Shell, Design System & Navigation
+- Owner this feature: Samukelo
+- Next up: #2 — Auth: Registration, Login, JWT Issue/Refresh (Thembani)
+
+## Current Build Status
+- Phase: Foundations
+- Landed: #0 — Repo scaffolding (/backend Spring Boot skeleton,
+  /frontend Vite+React skeleton created; Docker Compose + CI still to
+  confirm — verify before marking #0 fully done)
+- In progress: #1 — Frontend app shell (Samukelo)
+- Next up: #2 — Auth (Thembani), depends on #0 and #1
+
+## Do Not
+- Do not introduce a new state-management library beyond Zustand/TanStack
+  Query without a team discussion.
+- Do not add a new top-level module without updating this file and
+  docs/TECH_SPEC.md.
+- Do not bypass tenant scoping "just for now."
+- Do not skip the explain-first step in "How We Want You To Work" above.
