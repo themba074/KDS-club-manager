@@ -21,7 +21,7 @@
 
 ### Backend
 - **Java 21 (LTS)**
-- **Spring Boot 3.x**
+- **Spring Boot 4.1.0**
 - **Spring Security** (JWT-based authentication/authorization)
 - **Spring Data JPA** (Hibernate) for persistence
 - **Bean Validation (Jakarta Validation)** for request validation

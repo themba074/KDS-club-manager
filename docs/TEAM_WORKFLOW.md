@@ -105,7 +105,7 @@ afterward. When in doubt, explain first.
 ## Stack
 - Frontend: React 18 + TypeScript + Vite, Zustand (client state), TanStack
   Query (server state), React Router, Tailwind CSS, shadcn/ui
-- Backend: Java 21, Spring Boot 3.x, Spring Security (JWT), Spring Data
+- Backend: Java 21, Spring Boot 4.1.0, Spring Security (JWT), Spring Data
   JPA, MapStruct, Flyway
 - Database: PostgreSQL — shared schema, tenant-scoped via `club_id` +
   enforced TenantContext (see TECH_SPEC.md §3). NEVER write a query or
