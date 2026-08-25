@@ -24,6 +24,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-kds_dev_password}
       JWT_SECRET: ${JWT_SECRET:-kds-local-development-signing-key-change-before-production-2026}
       DEVELOPMENT_RESET_DELIVERY: ${DEVELOPMENT_RESET_DELIVERY:-true}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
