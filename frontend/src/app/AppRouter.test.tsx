@@ -2,10 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { AppRouter } from "@/app/AppRouter"
+import { useAuthStore } from "@/features/auth/auth-store"
 
 describe("AppRouter", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/")
+    useAuthStore.setState({ accessToken: "test-token", user: { id: "user-1", email: "member@example.com" }, initialized: true })
   })
 
   it("renders the application shell and dashboard route", () => {

@@ -5,6 +5,8 @@ import { NavLink, Outlet } from "react-router-dom"
 import { navigationItems } from "@/app/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/features/auth/auth-store"
+import { api } from "@/features/auth/auth-api"
 
 const navigationSections = ["Club", "Governance"] as const
 
@@ -70,6 +72,8 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const user = useAuthStore((state) => state.user)
+  const clearSession = useAuthStore((state) => state.clearSession)
   return (
     <>
       <div className="border-b border-sidebar-border p-4">
@@ -77,16 +81,16 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <SidebarNavigation onNavigate={onNavigate} />
       <div className="border-t border-sidebar-border p-3">
-        <button
+        <button onClick={() => void api.post("/auth/logout").finally(clearSession)}
           type="button"
           className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-            TS
+            {user?.email.slice(0, 2).toUpperCase() ?? "?"}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">Thembani Sithole</span>
-            <span className="block truncate text-xs text-muted-foreground">Club administrator</span>
+            <span className="block truncate text-sm font-medium">{user?.email}</span>
+            <span className="block truncate text-xs text-muted-foreground">Log out</span>
           </span>
           <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
         </button>

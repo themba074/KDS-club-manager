@@ -58,28 +58,28 @@ see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
 filled-in prompt for each one. Assignment is a default, not a rule —
 either of you can pick up the other's feature if it makes sense.
 
-- Most recently landed on `main`: #1 — Frontend App Shell, Design
-  System & Navigation (Samukelo)
-- In progress on `feature/foundation-completion`: #0 — health endpoint,
-  Docker Compose, and CI
-- Next feature after #0: #2 — Auth: Registration, Login, JWT
-  Issue/Refresh (Thembani)
+- Most recently landed on `main`: #0 — health endpoint, Docker Compose,
+  and CI
+- In progress on `feature/authentication`: #2 — Auth: Registration,
+  Login, JWT Issue/Refresh (Thembani)
 
 ## Current Build Status
 - Phase: Foundations
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
-- Implemented on `feature/foundation-completion`: #0 — public backend
+- Landed on `main`: #0 — public backend
   health endpoint, Docker Compose for PostgreSQL/backend/frontend, and a
-  GitHub Actions backend/frontend verification workflow. Local backend,
-  frontend, and Compose configuration checks pass; a complete container
-  startup check remains pending until Docker Desktop is running.
+  GitHub Actions backend/frontend verification workflow.
 - Landed on `main`: #1 — Frontend app shell (Samukelo): responsive
   layout, centralized routing/navigation, design tokens, placeholder
   feature pages, shared loading/empty/error states, and frontend render
   tests.
-- Next required: review and merge #0, then begin #2 — Auth (Thembani).
+- In progress: #2 — global user identity, registration/login, rotating
+  refresh-token sessions, password reset, protected SPA routes, and auth
+  forms are implemented on `feature/authentication`.
+- Next required: review and merge #2, then begin #3 — Club creation and
+  TenantContext.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
