@@ -58,8 +58,8 @@ see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
 filled-in prompt for each one. Assignment is a default, not a rule —
 either of you can pick up the other's feature if it makes sense.
 
-- Most recently completed: #1 — Frontend App Shell, Design System &
-  Navigation (Samukelo)
+- Most recently landed on `main`: #1 — Frontend App Shell, Design
+  System & Navigation (Samukelo)
 - Next required foundation work: complete #0 — health endpoint, Docker
   Compose, and CI (owner to confirm)
 - Next feature after #0: #2 — Auth: Registration, Login, JWT
@@ -73,10 +73,10 @@ either of you can pick up the other's feature if it makes sense.
 - Partially complete: #0 — Repo scaffolding. Still required: backend
   health endpoint, Docker Compose for PostgreSQL/backend/frontend, and a
   GitHub Actions build/lint/test workflow.
-- Completed on `feature/frontend-app-shell`: #1 — Frontend app shell
-  (Samukelo): responsive layout,
-  centralized routing/navigation, design tokens, placeholder feature
-  pages, shared loading/empty/error states, and frontend render tests.
+- Landed on `main`: #1 — Frontend app shell (Samukelo): responsive
+  layout, centralized routing/navigation, design tokens, placeholder
+  feature pages, shared loading/empty/error states, and frontend render
+  tests.
 - Next required: finish #0, then begin #2 — Auth (Thembani).
 
 ## Do Not
