@@ -60,8 +60,8 @@ either of you can pick up the other's feature if it makes sense.
 
 - Most recently landed on `main`: #1 — Frontend App Shell, Design
   System & Navigation (Samukelo)
-- Next required foundation work: complete #0 — health endpoint, Docker
-  Compose, and CI (owner to confirm)
+- In progress on `feature/foundation-completion`: #0 — health endpoint,
+  Docker Compose, and CI
 - Next feature after #0: #2 — Auth: Registration, Login, JWT
   Issue/Refresh (Thembani)
 
@@ -70,14 +70,16 @@ either of you can pick up the other's feature if it makes sense.
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
-- Partially complete: #0 — Repo scaffolding. Still required: backend
+- Implemented on `feature/foundation-completion`: #0 — public backend
   health endpoint, Docker Compose for PostgreSQL/backend/frontend, and a
-  GitHub Actions build/lint/test workflow.
+  GitHub Actions backend/frontend verification workflow. Local backend,
+  frontend, and Compose configuration checks pass; a complete container
+  startup check remains pending until Docker Desktop is running.
 - Landed on `main`: #1 — Frontend app shell (Samukelo): responsive
   layout, centralized routing/navigation, design tokens, placeholder
   feature pages, shared loading/empty/error states, and frontend render
   tests.
-- Next required: finish #0, then begin #2 — Auth (Thembani).
+- Next required: review and merge #0, then begin #2 — Auth (Thembani).
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
