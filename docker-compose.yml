@@ -22,6 +22,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-kds_club_manager}
       DB_USERNAME: ${POSTGRES_USER:-kds}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-kds_dev_password}
+      JWT_SECRET: ${JWT_SECRET:-kds-local-development-signing-key-change-before-production-2026}
+      DEVELOPMENT_RESET_DELIVERY: ${DEVELOPMENT_RESET_DELIVERY:-true}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:

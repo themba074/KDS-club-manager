@@ -11,11 +11,18 @@ import { MembersPage } from "@/features/members"
 import { NotificationsPage } from "@/features/notifications"
 import { ReportsPage } from "@/features/reports"
 import { VotingPage } from "@/features/voting"
+import { CredentialsPage, ForgotPasswordPage, ResetPasswordPage } from "@/features/auth/AuthPages"
+import { ProtectedRoute } from "@/features/auth/ProtectedRoute"
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="login" element={<CredentialsPage mode="login" />} />
+        <Route path="register" element={<CredentialsPage mode="register" />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="members" element={<MembersPage />} />
@@ -27,6 +34,7 @@ export function AppRouter() {
           <Route path="audit" element={<AuditPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
         </Route>
       </Routes>
     </BrowserRouter>
