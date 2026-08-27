@@ -11,6 +11,7 @@ import jakarta.servlet.http.Cookie;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -21,6 +22,15 @@ class AuthFlowIntegrationTests {
 
     @Autowired
     AuthFlowIntegrationTests(MockMvc mockMvc) { this.mockMvc = mockMvc; }
+
+    @Test
+    void dockerLoopbackOriginIsAllowedByCors() throws Exception {
+        mockMvc.perform(options("/api/v1/auth/register")
+                        .header("Origin", "http://127.0.0.1:5175")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://127.0.0.1:5175"));
+    }
 
     @Test
     void registerLoginAndRefreshRotateTheSession() throws Exception {

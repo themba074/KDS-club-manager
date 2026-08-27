@@ -31,9 +31,9 @@ public class FoundationSecurityConfiguration {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(@Value("${app.auth.allowed-origin}") String allowedOrigin) {
+    CorsConfigurationSource corsConfigurationSource(@Value("${app.auth.allowed-origins}") List<String> allowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigin));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
