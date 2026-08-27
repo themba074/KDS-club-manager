@@ -20,6 +20,8 @@ summary for agent context, not the full spec.
 - Deployment: Docker / Docker Compose, GitHub Actions CI
 
 ## Architecture
+- ClubTypeConfig now provides the global Investment Club role/permission
+  catalog. Identity owns tenant-scoped membership role assignments.
 - Modular monolith. Modules: Identity/Tenancy, Members, Contributions,
   Meetings, Voting, Documents, Notifications, Audit, ClubTypeConfig.
 - Modules talk to each other only through their public application-service
@@ -58,9 +60,9 @@ see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
 filled-in prompt for each one. Assignment is a default, not a rule —
 either of you can pick up the other's feature if it makes sense.
 
-- Most recently landed on `main`: #2 — authentication (PR #5).
-- In progress on `codex/club-tenancy`: #3 — club creation, selection,
-  and TenantContext.
+- Feature 3 and the 8-character password minimum are committed at b66e90e
+  (the current local origin/main reference).
+- In progress on `codex/roles-permissions`: #4 — roles and permissions.
 
 ## Current Build Status
 - Phase: Foundations
@@ -77,13 +79,16 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #2 — global user identity, registration/login, rotating
   refresh-token sessions, password reset, protected SPA routes, and auth
   forms.
-- Implemented on `codex/club-tenancy`, awaiting review: #3 — club wizard,
+- Committed foundation: #3 — club wizard,
   administrator membership, club selection/refresh, tenant request context,
   and scoped persistence with isolation tests.
 - Identity bootstrap (create/list/select clubs) is authenticated-user-scoped;
   it must work before a club is selected. All tenant-data reads require
   TenantContext and explicit repository predicates (see TECH_SPEC section 3).
-- Next required: review and merge #3, then #4 — roles and permissions.
+- Implemented on `codex/roles-permissions`, awaiting review: #4 — seeded
+  global Investment Club role catalog, scoped assignments, current-permission
+  backend checks, last-manager protection, and permission-aware UI.
+- Next required: review and merge #4, then #5 — invites and member directory.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

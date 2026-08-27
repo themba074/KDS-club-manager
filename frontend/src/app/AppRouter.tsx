@@ -15,6 +15,8 @@ import { CredentialsPage, ForgotPasswordPage, ResetPasswordPage } from "@/featur
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute"
 import { ClubWorkspacePage } from "@/features/clubs/ClubWorkspacePage"
 import { RequireClub } from "@/features/clubs/RequireClub"
+import { RoleManagement } from "@/features/roles/RoleManagement"
+import { PermissionGate } from "@/features/roles/permissions"
 
 export function AppRouter() {
   return (
@@ -29,14 +31,15 @@ export function AppRouter() {
         <Route element={<RequireClub />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="members" element={<MembersPage />} />
-          <Route path="contributions" element={<ContributionsPage />} />
-          <Route path="meetings" element={<MeetingsPage />} />
-          <Route path="voting" element={<VotingPage />} />
-          <Route path="documents" element={<DocumentsPage />} />
+          <Route path="roles" element={<PermissionGate permission="ROLES_READ"><RoleManagement /></PermissionGate>} />
+          <Route path="members" element={<PermissionGate permission="MEMBERS_READ"><MembersPage /></PermissionGate>} />
+          <Route path="contributions" element={<PermissionGate permission="CONTRIBUTIONS_READ"><ContributionsPage /></PermissionGate>} />
+          <Route path="meetings" element={<PermissionGate permission="MEETINGS_READ"><MeetingsPage /></PermissionGate>} />
+          <Route path="voting" element={<PermissionGate permission="VOTES_READ"><VotingPage /></PermissionGate>} />
+          <Route path="documents" element={<PermissionGate permission="DOCUMENTS_READ"><DocumentsPage /></PermissionGate>} />
           <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="audit" element={<AuditPage />} />
-          <Route path="reports" element={<ReportsPage />} />
+          <Route path="audit" element={<PermissionGate permission="AUDIT_READ"><AuditPage /></PermissionGate>} />
+          <Route path="reports" element={<PermissionGate permission="REPORTS_READ"><ReportsPage /></PermissionGate>} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         </Route>

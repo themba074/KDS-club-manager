@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.server.resource.web.authentication.Be
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class FoundationSecurityConfiguration {
 
     @Bean

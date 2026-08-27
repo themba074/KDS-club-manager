@@ -29,7 +29,7 @@ export function CreateClubWizard({ onCreated }: { onCreated: (club: ClubSummary)
         </> : <div className="rounded-lg bg-muted p-4">
           <p className="font-medium">{getValues("name").trim()}</p>
           <p className="text-sm">Investment Club</p>
-          <p className="mt-2 text-sm">You will be this club’s administrator. Configurable permissions come in the next feature.</p>
+          <p className="mt-2 text-sm">You will be this club’s administrator and can assign roles to its members.</p>
         </div>}
         {createClub.error && <p role="alert" className="text-sm text-destructive">{errorMessage(createClub.error)}</p>}
         <div className="flex gap-3">

@@ -1,7 +1,7 @@
 import { create } from "zustand"
 
 export type AuthUser = { id: string; email: string }
-export type ClubSummary = { id: string; name: string; clubType: "INVESTMENT_CLUB"; administrator: boolean }
+export type ClubSummary = { id: string; name: string; clubType: "INVESTMENT_CLUB"; administrator: boolean; permissions?: string[] }
 
 type AuthState = {
   accessToken: string | null

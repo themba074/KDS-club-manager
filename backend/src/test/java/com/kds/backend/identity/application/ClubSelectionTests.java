@@ -48,7 +48,7 @@ class ClubSelectionTests {
         assertEquals(clubId, next.getValue().getActiveClubId());
         assertTrue(token.isRotated());
         assertEquals(club, result.activeClub());
-        verify(jwt).issue(user, clubId);
+        verify(jwt).issue(user, clubId, java.util.List.of());
     }
 
     @Test void deniedMembershipDoesNotRotateSession() {
