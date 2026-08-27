@@ -26,10 +26,10 @@ class AuthFlowIntegrationTests {
     @Test
     void dockerLoopbackOriginIsAllowedByCors() throws Exception {
         mockMvc.perform(options("/api/v1/auth/register")
-                        .header("Origin", "http://127.0.0.1:5173")
+                        .header("Origin", "http://127.0.0.1:5175")
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Access-Control-Allow-Origin", "http://127.0.0.1:5173"));
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://127.0.0.1:5175"));
     }
 
     @Test

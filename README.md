@@ -9,13 +9,13 @@ responsive React application.
 Prerequisites: Docker Desktop with Docker Compose.
 
 ```powershell
-Copy-Item .env.example .env
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 docker compose up --build
 ```
 
 The local services are available at:
 
-- Frontend: <http://localhost:5173>
+- Frontend: <http://localhost:5175>
 - Backend health: <http://localhost:8080/actuator/health>
 - PostgreSQL: `localhost:5432`
 
@@ -30,6 +30,35 @@ docker compose down
 
 Add `--volumes` only when you intentionally want to remove the local PostgreSQL
 data volume as well.
+
+## Run the frontend from Bash (development mode)
+
+Both modes use **http://localhost:5175**. Run only one frontend at a time.
+For an existing `.env`, set `FRONTEND_PORT=5175`; any `FRONTEND_ORIGINS`
+or `FRONTEND_URL` overrides must also use port 5175. Do not replace your
+existing secrets by copying `.env.example` over `.env`.
+
+From the project root in Git Bash:
+
+```bash
+docker compose stop frontend
+docker compose up -d --build backend
+cd frontend
+npm ci
+npm run dev
+```
+
+Vite forwards `/api` requests to the backend on port 8080, just as Docker's
+Nginx proxy does. PostgreSQL and the backend remain in Docker. Vite binds
+to IPv4 loopback and refuses to select a different port if 5175 is occupied.
+If startup fails, stop the other frontend rather than changing the URL.
+
+To switch back to Docker, press `Ctrl+C` in the Vite terminal, return to
+the project root, and run `docker compose up -d --build`.
+
+Password-reset links also use http://localhost:5175. The local development
+reset adapter prints links to `docker compose logs backend`; it does not
+send real email.
 
 ## Run checks without Docker
 
