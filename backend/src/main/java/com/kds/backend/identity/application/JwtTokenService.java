@@ -13,6 +13,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtTokenService {
@@ -29,15 +30,20 @@ public class JwtTokenService {
     }
 
     public String issue(UserEntity user) {
+        return issue(user, null);
+    }
+
+    public String issue(UserEntity user, UUID clubId) {
         Instant now = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(ISSUER)
                 .issuedAt(now)
                 .expiresAt(now.plus(accessTokenTtl))
                 .subject(user.getId().toString())
                 .claim("userId", user.getId().toString())
-                .claim("permissions", List.of())
-                .build();
+                .claim("permissions", List.of());
+        if (clubId != null) claimsBuilder.claim("clubId", clubId.toString());
+        JwtClaimsSet claims = claimsBuilder.build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }

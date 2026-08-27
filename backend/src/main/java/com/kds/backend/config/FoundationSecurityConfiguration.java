@@ -13,19 +13,26 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import com.kds.backend.identity.application.ClubService;
+import com.kds.backend.identity.infrastructure.TenantContextFilter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 @Configuration
 public class FoundationSecurityConfiguration {
 
     @Bean
-    SecurityFilterChain foundationSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain foundationSecurityFilterChain(HttpSecurity http, ClubService clubs) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
                 .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh",
+                        "/api/v1/auth/logout", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm").permitAll()
                 .anyRequest().authenticated())
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt -> {}));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt -> {}))
+                .addFilterAfter(new TenantContextFilter(clubs), BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }

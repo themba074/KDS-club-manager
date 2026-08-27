@@ -7,7 +7,7 @@ export function useAuthenticate(path: "login" | "register") {
   return useMutation({
     mutationFn: (input: { email: string; password: string }) =>
       api.post<AuthResponse>(`/auth/${path}`, input).then(({ data }) => data),
-    onSuccess: (session) => setSession(session.accessToken, session.user),
+    onSuccess: (session) => setSession(session.accessToken, session.user, session.activeClub),
   })
 }
 

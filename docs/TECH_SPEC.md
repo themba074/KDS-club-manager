@@ -86,7 +86,7 @@ At this stage (a two-developer team with an unvalidated product), microservices 
 
 ## 3. Multi-Tenancy Strategy
 
-**Chosen approach: shared database, shared schema, with a `club_id` (tenant) column on every tenant-scoped table, enforced via a discriminator + Hibernate filter (or a base repository pattern).**
+**Chosen approach: shared database, shared schema, with a `club_id` (tenant) column on every tenant-scoped table, enforced inside tenant-aware repositories.**
 
 ### Alternatives considered
 | Approach | Isolation | Ops complexity | Cost at scale | Notes |
@@ -98,11 +98,21 @@ At this stage (a two-developer team with an unvalidated product), microservices 
 ### Why shared schema wins here
 For an MVP validating a product thesis with a handful to low hundreds of clubs, database- or schema-per-tenant is premature — it multiplies migration and operational work for isolation benefits you don't yet need. Shared schema with a `club_id` on every row, combined with:
 - A `TenantContext` (thread-local, populated from the authenticated JWT's club claim) resolved once per request, and
-- A base repository/service layer that **automatically applies the tenant filter** (e.g. via Hibernate `@Filter` or a custom JPA specification applied globally)
+- Tenant-aware repositories that obtain the required ID from `TenantContext` and include it in every query; unrestricted inherited CRUD methods must not be exposed for tenant entities.
 
 ...gives strong practical isolation without the operational cost. The key engineering discipline: **no query bypasses the tenant filter**, enforced by code review conventions and integration tests that specifically attempt cross-tenant reads.
 
 This can migrate to schema-per-tenant later for large/enterprise clubs if needed — the abstraction (a `TenantContext`) is designed so the underlying isolation mechanism can change without touching module business logic.
+
+### Feature 3 implementation
+
+- Global identity/authentication and authenticated-user-scoped club bootstrap are explicit exceptions to requiring an active tenant. `POST /api/v1/clubs` creates a club and its creator membership atomically; `GET /api/v1/clubs` lists only that user's memberships. Only `INVESTMENT_CLUB` is accepted for now.
+- Protected `POST /api/v1/auth/select-club` accepts `clubId`, requires a bearer token and a refresh cookie belonging to the same user, validates membership, and rotates the session. It does not trust a requested ID as proof of access.
+- Login/registration start without a selected club. Selection adds the `clubId` JWT claim and stores the active club on the refresh session. Refresh revalidates membership. User-row locking serializes rotation and reuse revocation.
+- The tenant filter runs after bearer verification, checks membership, sets context, and clears it in `finally`. Missing/invalid/inaccessible club context is rejected with 403. `GET /api/v1/club` exercises the tenant boundary.
+- `CurrentClubRepository` applies the context predicate even for ID lookups. `ClubAccessRepository` is a narrowly scoped identity bootstrap repository whose reads always constrain `userId`. There is no global Hibernate filter or database row-level security: future module repositories must implement this boundary and cross-tenant tests explicitly.
+- The frontend keeps the active club in Zustand, cancels/removes cached queries during selection, hides tenant pages while switching, and discards responses from an earlier session version. Future tenant query keys must include the active club ID. Refresh and selection are serialized within a tab; multi-tab session coordination is not implemented and simultaneous refreshes may require signing in again.
+- Creator membership records administrator status; configurable roles and permission enforcement belong to Feature 4. This flag is not a blanket authorization grant to future endpoints.
 
 ---
 

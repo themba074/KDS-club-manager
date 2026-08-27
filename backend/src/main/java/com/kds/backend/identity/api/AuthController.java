@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
+import java.util.UUID;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import static com.kds.backend.identity.api.AuthDtos.*;
 
@@ -51,6 +54,14 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie("", 0).toString());
     }
 
+    @PostMapping("/select-club")
+    public AuthResponse selectClub(@AuthenticationPrincipal Jwt principal,
+                                   @Valid @RequestBody SelectClubRequest request,
+                                   @CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
+                                   HttpServletResponse response) {
+        return respond(authService.selectClub(UUID.fromString(principal.getSubject()), refreshToken, request.clubId()), response);
+    }
+
     @PostMapping("/password-reset/request")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public MessageResponse requestReset(@Valid @RequestBody PasswordResetRequest request) {
@@ -67,7 +78,7 @@ public class AuthController {
     private AuthResponse respond(TokenPair pair, HttpServletResponse response) {
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie(pair.refreshToken(), refreshTokenTtl.toSeconds()).toString());
         return new AuthResponse(pair.accessToken(), pair.accessTokenExpiresInSeconds(),
-                new UserResponse(pair.userId(), pair.email()));
+                new UserResponse(pair.userId(), pair.email()), pair.activeClub());
     }
 
     private ResponseCookie refreshCookie(String value, long maxAge) {

@@ -101,6 +101,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppLayout() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
+  const activeClub = useAuthStore((state) => state.activeClub)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -145,8 +146,8 @@ export function AppLayout() {
             <Menu aria-hidden="true" />
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">Ubuntu Investment Club</p>
-            <p className="truncate text-xs text-muted-foreground">Active workspace</p>
+            <p className="truncate text-sm font-medium">{activeClub?.name}</p>
+            <NavLink to="/clubs" className="text-xs text-primary underline">Switch or create club</NavLink>
           </div>
           <Button variant="ghost" size="icon" aria-label="View notifications">
             <Bell aria-hidden="true" />

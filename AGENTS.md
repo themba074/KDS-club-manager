@@ -58,10 +58,9 @@ see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
 filled-in prompt for each one. Assignment is a default, not a rule —
 either of you can pick up the other's feature if it makes sense.
 
-- Most recently landed on `main`: #0 — health endpoint, Docker Compose,
-  and CI
-- In progress on `feature/authentication`: #2 — Auth: Registration,
-  Login, JWT Issue/Refresh (Thembani)
+- Most recently landed on `main`: #2 — authentication (PR #5).
+- In progress on `codex/club-tenancy`: #3 — club creation, selection,
+  and TenantContext.
 
 ## Current Build Status
 - Phase: Foundations
@@ -75,11 +74,16 @@ either of you can pick up the other's feature if it makes sense.
   layout, centralized routing/navigation, design tokens, placeholder
   feature pages, shared loading/empty/error states, and frontend render
   tests.
-- In progress: #2 — global user identity, registration/login, rotating
+- Landed on `main`: #2 — global user identity, registration/login, rotating
   refresh-token sessions, password reset, protected SPA routes, and auth
-  forms are implemented on `feature/authentication`.
-- Next required: review and merge #2, then begin #3 — Club creation and
-  TenantContext.
+  forms.
+- Implemented on `codex/club-tenancy`, awaiting review: #3 — club wizard,
+  administrator membership, club selection/refresh, tenant request context,
+  and scoped persistence with isolation tests.
+- Identity bootstrap (create/list/select clubs) is authenticated-user-scoped;
+  it must work before a club is selected. All tenant-data reads require
+  TenantContext and explicit repository predicates (see TECH_SPEC section 3).
+- Next required: review and merge #3, then #4 — roles and permissions.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

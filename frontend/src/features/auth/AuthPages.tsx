@@ -21,7 +21,7 @@ export function CredentialsPage({ mode }: { mode: "login" | "register" }) {
     <form className="space-y-4" onSubmit={handleSubmit((values) => mutation.mutate(values, { onSuccess: () => navigate("/") }))}>
       <label className="block text-sm font-medium">Email<Input type="email" autoComplete="email" {...register("email", { required: "Email is required" })} /></label>
       {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-      <label className="block text-sm font-medium">Password<Input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} {...register("password", { required: "Password is required", minLength: mode === "register" ? { value: 12, message: "Use at least 12 characters" } : undefined })} /></label>
+      <label className="block text-sm font-medium">Password<Input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} {...register("password", { required: "Password is required", minLength: mode === "register" ? { value: 8, message: "Use at least 8 characters" } : undefined })} /></label>
       {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
       {mutation.error && <p role="alert" className="text-sm text-destructive">{errorMessage(mutation.error)}</p>}
       <Button type="submit" className="w-full" disabled={mutation.isPending}>{mutation.isPending ? "Please wait…" : mode === "login" ? "Log in" : "Register"}</Button>
@@ -36,8 +36,8 @@ export function ForgotPasswordPage() {
 }
 
 export function ResetPasswordPage() {
-  const [params] = useSearchParams(); const navigate = useNavigate(); const mutation = useConfirmPasswordReset(); const { register, handleSubmit } = useForm<{ password: string }>()
+  const [params] = useSearchParams(); const navigate = useNavigate(); const mutation = useConfirmPasswordReset(); const { register, handleSubmit, formState: { errors } } = useForm<{ password: string }>()
   const token = params.get("token")
   if (!token) return <Frame title="Invalid reset link"><Link to="/forgot-password">Request a new link</Link></Frame>
-  return <Frame title="Choose a new password"><form className="space-y-4" onSubmit={handleSubmit(({ password }) => mutation.mutate({ token, newPassword: password }, { onSuccess: () => navigate("/login") }))}><label className="block text-sm font-medium">New password<Input type="password" {...register("password", { required: true, minLength: 12 })} /></label>{mutation.error && <p role="alert" className="text-sm text-destructive">{errorMessage(mutation.error)}</p>}<Button type="submit" className="w-full">Reset password</Button></form></Frame>
+  return <Frame title="Choose a new password"><form className="space-y-4" onSubmit={handleSubmit(({ password }) => mutation.mutate({ token, newPassword: password }, { onSuccess: () => navigate("/login") }))}><label className="block text-sm font-medium">New password<Input type="password" {...register("password", { required: "Password is required", minLength: { value: 8, message: "Use at least 8 characters" } })} /></label>{errors.password && <p role="alert" className="text-sm text-destructive">{errors.password.message}</p>}{mutation.error && <p role="alert" className="text-sm text-destructive">{errorMessage(mutation.error)}</p>}<Button type="submit" className="w-full">Reset password</Button></form></Frame>
 }

@@ -20,6 +20,7 @@ public class RefreshTokenEntity {
     @Column(name = "revoked_at") private Instant revokedAt;
     @Column(name = "replaced_by_hash", length = 64) private String replacedByHash;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
+    @Column(name = "active_club_id") private UUID activeClubId;
 
     protected RefreshTokenEntity() {}
     public RefreshTokenEntity(UUID id, UserEntity user, String tokenHash, UUID familyId, Instant expiresAt, Instant now) {
@@ -29,6 +30,8 @@ public class RefreshTokenEntity {
     public UserEntity getUser() { return user; }
     public String getTokenHash() { return tokenHash; }
     public UUID getFamilyId() { return familyId; }
+    public UUID getActiveClubId() { return activeClubId; }
+    public void selectClub(UUID clubId) { activeClubId = clubId; }
     public boolean isUsableAt(Instant now) { return revokedAt == null && expiresAt.isAfter(now); }
     public boolean isRotated() { return replacedByHash != null; }
     public void rotate(String replacementHash, Instant now) { revokedAt = now; replacedByHash = replacementHash; }

@@ -30,17 +30,19 @@ public class AuthService {
     private final Duration refreshTokenTtl;
     private final Duration resetTokenTtl;
     private final PasswordResetDelivery resetDelivery;
+    private final ClubService clubs;
 
     public AuthService(UserRepository users, RefreshTokenRepository refreshTokens,
                        PasswordResetTokenRepository resetTokens, PasswordEncoder passwordEncoder,
                        SecretTokenService secrets, JwtTokenService jwtTokens, Clock clock,
                        @Value("${app.auth.refresh-token-ttl}") Duration refreshTokenTtl,
                        @Value("${app.auth.password-reset-token-ttl}") Duration resetTokenTtl,
-                       PasswordResetDelivery resetDelivery) {
+                       PasswordResetDelivery resetDelivery, ClubService clubs) {
         this.users = users; this.refreshTokens = refreshTokens; this.resetTokens = resetTokens;
         this.passwordEncoder = passwordEncoder; this.secrets = secrets; this.jwtTokens = jwtTokens;
         this.clock = clock; this.refreshTokenTtl = refreshTokenTtl; this.resetTokenTtl = resetTokenTtl;
         this.resetDelivery = resetDelivery;
+        this.clubs = clubs;
     }
 
     @Transactional
@@ -63,8 +65,26 @@ public class AuthService {
 
     @Transactional(noRollbackFor = AuthenticationException.class)
     public TokenPair refresh(String rawToken) {
+        return rotate(rawToken, null, null);
+    }
+
+    @Transactional(noRollbackFor = AuthenticationException.class)
+    public TokenPair selectClub(UUID userId, String rawToken, UUID clubId) {
+        return rotate(rawToken, userId, clubId);
+    }
+
+    private TokenPair rotate(String rawToken, UUID expectedUserId, UUID selectedClubId) {
         Instant now = clock.instant();
-        RefreshTokenEntity current = refreshTokens.findByTokenHash(secrets.hash(rawToken))
+        if (rawToken == null || rawToken.isBlank()) throw new AuthenticationException("Please log in again.");
+        String tokenHash = secrets.hash(rawToken);
+        UUID ownerId = refreshTokens.ownerOf(tokenHash)
+                .orElseThrow(() -> new AuthenticationException("Please log in again."));
+        if (expectedUserId != null && !ownerId.equals(expectedUserId)) {
+            throw new AuthenticationException("The session does not belong to this user.");
+        }
+        // Serialize rotation and club switching for this identity, including token reuse revocation.
+        users.lockById(ownerId).orElseThrow(() -> new AuthenticationException("Please log in again."));
+        RefreshTokenEntity current = refreshTokens.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new AuthenticationException("The session has expired. Please log in again."));
         if (current.isRotated()) {
             refreshTokens.findAllByFamilyId(current.getFamilyId()).forEach(token -> token.revoke(now));
@@ -72,12 +92,17 @@ public class AuthService {
         }
         if (!current.isUsableAt(now)) throw new AuthenticationException("The session has expired. Please log in again.");
 
+        UUID clubId = selectedClubId != null ? selectedClubId : current.getActiveClubId();
+        ClubSummary activeClub = clubId == null ? null : clubs.requireMembership(ownerId, clubId);
+
         String replacement = secrets.generate();
         String replacementHash = secrets.hash(replacement);
         current.rotate(replacementHash, now);
-        refreshTokens.save(new RefreshTokenEntity(UUID.randomUUID(), current.getUser(), replacementHash,
-                current.getFamilyId(), now.plus(refreshTokenTtl), now));
-        return pair(current.getUser(), replacement);
+        RefreshTokenEntity next = new RefreshTokenEntity(UUID.randomUUID(), current.getUser(), replacementHash,
+                current.getFamilyId(), now.plus(refreshTokenTtl), now);
+        next.selectClub(clubId);
+        refreshTokens.save(next);
+        return pair(current.getUser(), replacement, activeClub);
     }
 
     @Transactional
@@ -113,12 +138,12 @@ public class AuthService {
         String rawRefreshToken = secrets.generate();
         refreshTokens.save(new RefreshTokenEntity(UUID.randomUUID(), user, secrets.hash(rawRefreshToken),
                 familyId, now.plus(refreshTokenTtl), now));
-        return pair(user, rawRefreshToken);
+        return pair(user, rawRefreshToken, null);
     }
 
-    private TokenPair pair(UserEntity user, String refreshToken) {
-        return new TokenPair(jwtTokens.issue(user), refreshToken, jwtTokens.expiresInSeconds(),
-                user.getId(), user.getEmail());
+    private TokenPair pair(UserEntity user, String refreshToken, ClubSummary activeClub) {
+        return new TokenPair(jwtTokens.issue(user, activeClub == null ? null : activeClub.id()), refreshToken, jwtTokens.expiresInSeconds(),
+                user.getId(), user.getEmail(), activeClub);
     }
 
     private String normalize(String email) { return email.strip().toLowerCase(Locale.ROOT); }

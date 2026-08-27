@@ -7,7 +7,8 @@ import { useAuthStore } from "@/features/auth/auth-store"
 describe("AppRouter", () => {
   beforeEach(() => {
     window.history.replaceState({}, "", "/")
-    useAuthStore.setState({ accessToken: "test-token", user: { id: "user-1", email: "member@example.com" }, initialized: true })
+    useAuthStore.setState({ accessToken: "test-token", user: { id: "user-1", email: "member@example.com" }, initialized: true,
+      activeClub: { id: "club-1", name: "Ubuntu Investment Club", clubType: "INVESTMENT_CLUB", administrator: true }, switchingClub: false })
   })
 
   it("renders the application shell and dashboard route", () => {

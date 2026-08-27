@@ -60,6 +60,26 @@ Password-reset links also use http://localhost:5175. The local development
 reset adapter prints links to `docker compose logs backend`; it does not
 send real email.
 
+## Create and switch clubs (Feature 3)
+
+After rebuilding the backend and frontend, open http://localhost:5175 and
+register or log in. You will arrive at **Your clubs**:
+
+1. Enter a club name. Investment Club is currently the only type.
+2. Select **Review club**, then **Create club**. You become its administrator
+   and enter its workspace.
+3. Use **Switch or create club** in the workspace header to create another
+   club or open an existing one.
+
+Reloading keeps the selected club through the refresh session. A fresh login
+asks you to select a club again. If membership/session access is rejected,
+sign in again. For now, test session switching in one browser tab; cross-tab
+refresh coordination is not implemented.
+
+Flyway applies the new club tables automatically; no database reset is needed.
+Full role/permission management is the next feature. Existing module pages
+remain placeholders, not live member/contribution data.
+
 ## Run checks without Docker
 
 Backend (Java 21):

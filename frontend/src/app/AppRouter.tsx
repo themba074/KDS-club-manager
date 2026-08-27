@@ -13,6 +13,8 @@ import { ReportsPage } from "@/features/reports"
 import { VotingPage } from "@/features/voting"
 import { CredentialsPage, ForgotPasswordPage, ResetPasswordPage } from "@/features/auth/AuthPages"
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute"
+import { ClubWorkspacePage } from "@/features/clubs/ClubWorkspacePage"
+import { RequireClub } from "@/features/clubs/RequireClub"
 
 export function AppRouter() {
   return (
@@ -23,6 +25,8 @@ export function AppRouter() {
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route element={<ProtectedRoute />}>
+        <Route path="clubs" element={<ClubWorkspacePage />} />
+        <Route element={<RequireClub />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="members" element={<MembersPage />} />
@@ -34,6 +38,7 @@ export function AppRouter() {
           <Route path="audit" element={<AuditPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
         </Route>
         </Route>
       </Routes>
