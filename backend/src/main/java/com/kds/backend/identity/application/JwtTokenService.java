@@ -34,6 +34,10 @@ public class JwtTokenService {
     }
 
     public String issue(UserEntity user, UUID clubId) {
+        return issue(user, clubId, List.of());
+    }
+
+    public String issue(UserEntity user, UUID clubId, List<String> permissions) {
         Instant now = clock.instant();
         JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(ISSUER)
@@ -41,7 +45,7 @@ public class JwtTokenService {
                 .expiresAt(now.plus(accessTokenTtl))
                 .subject(user.getId().toString())
                 .claim("userId", user.getId().toString())
-                .claim("permissions", List.of());
+                .claim("permissions", permissions);
         if (clubId != null) claimsBuilder.claim("clubId", clubId.toString());
         JwtClaimsSet claims = claimsBuilder.build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();

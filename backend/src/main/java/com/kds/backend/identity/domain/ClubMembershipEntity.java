@@ -11,7 +11,7 @@ public class ClubMembershipEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "club_id", nullable = false) private ClubEntity club;
     @Column(name = "user_id", nullable = false) private UUID userId;
-    @Column(nullable = false) private boolean administrator;
+    @Column(name = "role_code", nullable = false) private String roleCode;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
 
     protected ClubMembershipEntity() {}
@@ -19,9 +19,13 @@ public class ClubMembershipEntity {
         this.id = id;
         this.club = club;
         this.userId = userId;
-        this.administrator = administrator;
+        this.roleCode = administrator ? "ADMINISTRATOR" : "MEMBER";
         this.createdAt = now;
     }
     public ClubEntity getClub() { return club; }
-    public boolean isAdministrator() { return administrator; }
+    public boolean isAdministrator() { return "ADMINISTRATOR".equals(roleCode); }
+    public UUID getId() { return id; }
+    public UUID getUserId() { return userId; }
+    public String getRoleCode() { return roleCode; }
+    public void assignRole(String roleCode) { this.roleCode = roleCode; }
 }

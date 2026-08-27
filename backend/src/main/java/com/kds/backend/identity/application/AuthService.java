@@ -142,7 +142,8 @@ public class AuthService {
     }
 
     private TokenPair pair(UserEntity user, String refreshToken, ClubSummary activeClub) {
-        return new TokenPair(jwtTokens.issue(user, activeClub == null ? null : activeClub.id()), refreshToken, jwtTokens.expiresInSeconds(),
+        return new TokenPair(jwtTokens.issue(user, activeClub == null ? null : activeClub.id(),
+                activeClub == null ? java.util.List.of() : activeClub.permissions()), refreshToken, jwtTokens.expiresInSeconds(),
                 user.getId(), user.getEmail(), activeClub);
     }
 

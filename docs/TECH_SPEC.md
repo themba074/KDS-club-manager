@@ -112,7 +112,8 @@ This can migrate to schema-per-tenant later for large/enterprise clubs if needed
 - The tenant filter runs after bearer verification, checks membership, sets context, and clears it in `finally`. Missing/invalid/inaccessible club context is rejected with 403. `GET /api/v1/club` exercises the tenant boundary.
 - `CurrentClubRepository` applies the context predicate even for ID lookups. `ClubAccessRepository` is a narrowly scoped identity bootstrap repository whose reads always constrain `userId`. There is no global Hibernate filter or database row-level security: future module repositories must implement this boundary and cross-tenant tests explicitly.
 - The frontend keeps the active club in Zustand, cancels/removes cached queries during selection, hides tenant pages while switching, and discards responses from an earlier session version. Future tenant query keys must include the active club ID. Refresh and selection are serialized within a tab; multi-tab session coordination is not implemented and simultaneous refreshes may require signing in again.
-- Creator membership records administrator status; configurable roles and permission enforcement belong to Feature 4. This flag is not a blanket authorization grant to future endpoints.
+- Creator membership receives the Administrator role under Feature 4. The
+  returned administrator boolean is display-only; permissions authorize actions.
 
 ---
 
@@ -124,9 +125,55 @@ This can migrate to schema-per-tenant later for large/enterprise clubs if needed
 - JWT payload includes: `userId`, `clubId` (active tenant context), and a list of **permissions** (not raw roles) resolved at login/token-refresh time.
 
 ### Why permissions in the token, not just roles
-Roles are configurable per club type (a "Treasurer" role in a stokvel maps to different underlying permissions than in a sports club). Encoding **resolved permissions** rather than a role name means the API layer's `@PreAuthorize` checks stay simple and generic (`hasPermission('CONTRIBUTIONS_WRITE')`) regardless of what the role is *called* for that club type. The role→permission mapping lives in the ClubTypeConfig module, resolved once at auth time.
+Roles are configurable per club type (a "Treasurer" role in a stokvel maps to different underlying permissions than in a sports club). Encoding **resolved permissions** rather than a role name means the API layer's `@PreAuthorize` checks stay simple and generic (`hasAuthority('CONTRIBUTIONS_WRITE')`) regardless of what the role is *called* for that club type. The role→permission mapping lives in ClubTypeConfig. Tokens carry a snapshot; tenant requests resolve current permissions again for enforcement.
 
 ### Authorization model
+
+- Feature 4: ClubTypeConfig owns the global read-only role catalog and
+  role-permission mappings; Identity owns club-scoped assignments. Each
+  membership currently has one role. Administrator is the management role
+  alongside Chairperson, Treasurer, Secretary and Member. Custom roles and
+  multiple simultaneous roles are not exposed in this foundation.
+- Existing creator memberships migrate to Administrator; other memberships
+  migrate to Member. New creators receive Administrator. A per-club lock and
+  permission re-check protect assignment and prevent removing the last role
+  manager. JWT permissions are a session snapshot; backend authorities are
+  resolved from current membership/configuration on every tenant request.
+
+#### Feature 4 defaults and API
+
+The seeded catalog lives in migration V3. Administrator has every defined
+permission, including ROLES_MANAGE; Chairperson can read role definitions
+but cannot assign roles. Treasurer can write contributions; Secretary can
+manage documents and membership details; Member has shared read access and
+VOTES_CAST. All roles can read meetings/documents and vote. Chairperson has
+VOTES_CREATE and AUDIT_READ; Treasurer and Secretary do not. Permissions
+are deliberately not inferred from a role's displayed name.
+
+- GET /api/v1/roles: ROLES_READ; current club type's read-only role definitions.
+- GET /api/v1/role-members: ROLES_MANAGE; current club's membership IDs, emails and roles.
+- PUT /api/v1/role-members/{membershipId}: ROLES_MANAGE; body contains roleCode.
+  Unknown roles return 400, foreign memberships 403, last-manager removal 409.
+- GET /api/v1/permissions: current authenticated club membership's effective permissions.
+
+Role management uses both method-level checks and an application-service
+re-check under the club lock. Membership reads/updates constrain club_id.
+Global catalog queries constrain club_type, not tenant IDs, by design.
+There is no public role-definition editor in Feature 4.
+
+Session responses expose activeClub.permissions, and selected-club JWTs
+include the same permission snapshot. The browser uses permissions for
+navigation, route guards and assignment controls. Changes to another user's
+UI become visible on refresh/login; backend revocation does not wait for
+their token to expire. The assigning user's session is refreshed after saving.
+Frontend cache keys contain the club ID. Member invitations remain Feature 5.
+
+Finance/document business endpoints remain future work. Feature 4's integration
+tests use test-only secured operations to verify Treasurer/Member allow-deny
+behavior; no placeholder financial write endpoint is shipped.
+
+#### General authorization rules
+
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)
 - Each club type template defines its roles as **named bundles of permissions**.
 - A member's effective permissions for a club = permissions attached to their assigned role(s) in that club.

@@ -77,8 +77,28 @@ sign in again. For now, test session switching in one browser tab; cross-tab
 refresh coordination is not implemented.
 
 Flyway applies the new club tables automatically; no database reset is needed.
-Full role/permission management is the next feature. Existing module pages
-remain placeholders, not live member/contribution data.
+Existing module pages remain placeholders, not live member/contribution data.
+
+## Roles and permissions (Feature 4)
+
+Rebuild with `docker compose up -d --build`, reload the frontend, log in and
+select your club. Existing club creators retain Administrator access through
+the migration. No database reset is needed.
+
+Open **Roles** in the sidebar to view the role catalog. Administrators can
+select a role beside an existing membership and click **Save role**.
+Chairpersons can view the catalog but cannot assign roles. Other roles
+do not see the Roles page. You cannot remove the last administrator.
+To transfer management access, first assign Administrator to another member.
+
+Each membership currently has one role. Roles are Administrator, Chairperson,
+Treasurer, Secretary and Member. Custom role editing and invitations are not
+part of this feature; until Feature 5, a newly created club contains only its
+creator. Do not modify the database manually to test production memberships.
+
+Backend permission removal applies on subsequent requests even with an older
+JWT. Another user's UI updates when their session refreshes or they log in
+again. The 8-character password minimum and port 5175 are unchanged.
 
 ## Run checks without Docker
 

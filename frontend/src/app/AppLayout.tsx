@@ -31,6 +31,7 @@ function Brand() {
 }
 
 function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
+  const permissions = useAuthStore((state) => state.activeClub?.permissions)
   return (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Main navigation">
       {navigationSections.map((section) => (
@@ -40,7 +41,7 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
           </p>
           <ul className="space-y-1">
             {navigationItems
-              .filter((item) => item.section === section)
+              .filter((item) => item.section === section && (!item.permission || permissions?.includes(item.permission)))
               .map((item) => {
                 const Icon = item.icon
 

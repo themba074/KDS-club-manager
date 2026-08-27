@@ -31,8 +31,12 @@ public class TenantContextFilter extends OncePerRequestFilter {
                     String claim = authentication.getToken().getClaimAsString("clubId");
                     if (claim == null) throw new AccessDeniedException("No active club");
                     UUID clubId = UUID.fromString(claim);
-                    clubs.requireMembership(UUID.fromString(authentication.getName()), clubId);
+                    var club = clubs.requireMembership(UUID.fromString(authentication.getName()), clubId);
                     TenantContext.set(clubId);
+                    var authorities = club.permissions().stream()
+                            .map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).toList();
+                    SecurityContextHolder.getContext().setAuthentication(
+                            new JwtAuthenticationToken(authentication.getToken(), authorities, authentication.getName()));
                 } catch (IllegalArgumentException | AccessDeniedException exception) {
                     response.setStatus(403);
                     response.setContentType("application/problem+json");
