@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form"
+import { useRef } from "react"
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,8 +32,26 @@ export function CredentialsPage({ mode }: { mode: "login" | "register" }) {
 }
 
 export function ForgotPasswordPage() {
-  const mutation = useRequestPasswordReset(); const { register, handleSubmit } = useForm<{ email: string }>()
-  return <Frame title="Reset your password"><form className="space-y-4" onSubmit={handleSubmit(({ email }) => mutation.mutate(email))}><label className="block text-sm font-medium">Email<Input type="email" {...register("email", { required: true })} /></label>{mutation.isSuccess ? <p>Check your inbox if an account exists for that email.</p> : <Button type="submit" className="w-full">Send reset instructions</Button>}</form><Link className="mt-4 block text-sm" to="/login">Back to login</Link></Frame>
+  const mutation = useRequestPasswordReset()
+  const submitting = useRef(false)
+  const { register, handleSubmit, formState: { errors } } = useForm<{ email: string }>()
+  return <Frame title="Reset your password">
+    <form className="space-y-4" onSubmit={(event) => void handleSubmit(({ email }) => {
+      if (submitting.current || mutation.isSuccess) return
+      submitting.current = true
+      mutation.mutate(email, { onSettled: () => { submitting.current = false } })
+    })(event)}>
+      <label className="block text-sm font-medium">Email<Input type="email" disabled={mutation.isPending}
+        {...register("email", { required: "Email is required" })} /></label>
+      {errors.email && <p role="alert" className="text-sm text-destructive">{errors.email.message}</p>}
+      {mutation.error && <p role="alert" className="text-sm text-destructive">{errorMessage(mutation.error)} Please try again.</p>}
+      {mutation.isSuccess ? <p role="status">Check your inbox if an account exists for that email.</p> :
+        <Button type="submit" className="w-full" disabled={mutation.isPending}>
+          {mutation.isPending ? "Sending…" : "Send reset instructions"}
+        </Button>}
+    </form>
+    <Link className="mt-4 block text-sm" to="/login">Back to login</Link>
+  </Frame>
 }
 
 export function ResetPasswordPage() {

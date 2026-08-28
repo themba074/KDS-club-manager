@@ -1,8 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render as renderComponent, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { AppRouter } from "@/app/AppRouter"
 import { useAuthStore } from "@/features/auth/auth-store"
+
+function render(children: ReactNode) {
+  return renderComponent(<QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>)
+}
 
 describe("AppRouter", () => {
   beforeEach(() => {

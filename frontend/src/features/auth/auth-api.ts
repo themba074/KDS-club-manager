@@ -8,6 +8,7 @@ type ScopedRequest = InternalAxiosRequestConfig & { retried?: boolean; sessionVe
 export const api = axios.create({ baseURL: "/api/v1", withCredentials: true })
 let refreshRequest: Promise<AuthResponse> | null = null
 let sessionQueue: Promise<unknown> = Promise.resolve()
+let logoutRequest: Promise<void> | null = null
 
 function serialized<T>(operation: () => Promise<T>): Promise<T> {
   const result = sessionQueue.then(operation, operation)
@@ -22,6 +23,7 @@ function applySession(session: AuthResponse, version: number) {
 }
 
 export function refreshSession() {
+  if (useAuthStore.getState().loggingOut) return Promise.reject(new CanceledError("Signing out"))
   if (!refreshRequest) {
     const version = useAuthStore.getState().sessionVersion
     const operation = serialized(async () => {
@@ -31,6 +33,19 @@ export function refreshSession() {
     refreshRequest = operation.finally(() => { refreshRequest = null })
   }
   return refreshRequest
+}
+
+export function logoutSession(): Promise<void> {
+  if (logoutRequest) return logoutRequest
+  useAuthStore.getState().beginLogout()
+  logoutRequest = serialized(async () => {
+    await api.post("/auth/logout")
+    useAuthStore.getState().clearSession()
+  }).finally(() => {
+    useAuthStore.getState().endLogout()
+    logoutRequest = null
+  })
+  return logoutRequest
 }
 
 // Serialize club switching with refresh so their Set-Cookie responses cannot race within a tab.
@@ -44,6 +59,7 @@ export function selectClubSession(clubId: string, version: number) {
 
 api.interceptors.request.use((config: ScopedRequest) => {
   const state = useAuthStore.getState()
+  if (state.loggingOut && config.url !== "/auth/logout") throw new CanceledError("Signing out")
   const authenticationRequest = config.url?.startsWith("/auth/")
   if (state.switchingClub && !authenticationRequest) throw new CanceledError("Club is changing")
   config.sessionVersion ??= state.sessionVersion

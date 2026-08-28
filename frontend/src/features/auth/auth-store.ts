@@ -9,6 +9,9 @@ type AuthState = {
   initialized: boolean
   activeClub: ClubSummary | null
   switchingClub: boolean
+  loggingOut: boolean
+  beginLogout: () => void
+  endLogout: () => void
   sessionVersion: number
   beginClubSwitch: () => number
   endClubSwitch: () => void
@@ -23,6 +26,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
   activeClub: null,
   switchingClub: false,
+  loggingOut: false,
+  beginLogout: () => set((state) => ({ loggingOut: true, sessionVersion: state.sessionVersion + 1 })),
+  endLogout: () => set({ loggingOut: false }),
   sessionVersion: 0,
   beginClubSwitch: () => {
     let version = 0
@@ -31,6 +37,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   endClubSwitch: () => set({ switchingClub: false }),
   setSession: (accessToken, user, activeClub = null) => set({ accessToken, user, activeClub, initialized: true }),
-  clearSession: () => set((state) => ({ accessToken: null, user: null, activeClub: null, switchingClub: false, initialized: true, sessionVersion: state.sessionVersion + 1 })),
+  clearSession: () => set((state) => ({ accessToken: null, user: null, activeClub: null, switchingClub: false, loggingOut: false, initialized: true, sessionVersion: state.sessionVersion + 1 })),
   setInitialized: () => set({ initialized: true }),
 }))

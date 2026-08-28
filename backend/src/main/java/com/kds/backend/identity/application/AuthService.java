@@ -108,12 +108,19 @@ public class AuthService {
     @Transactional
     public void logout(String rawToken) {
         if (rawToken == null || rawToken.isBlank()) return;
-        refreshTokens.findByTokenHash(secrets.hash(rawToken)).ifPresent(token -> token.revoke(clock.instant()));
+        String tokenHash = secrets.hash(rawToken);
+        refreshTokens.ownerOf(tokenHash).ifPresent(ownerId -> {
+            users.lockById(ownerId).orElseThrow(() -> new AuthenticationException("Please log in again."));
+            // A refresh may already have rotated the supplied token. Revoke its descendants too.
+            refreshTokens.findByTokenHash(tokenHash).ifPresent(token ->
+                    refreshTokens.findAllByFamilyId(token.getFamilyId()).forEach(session -> session.revoke(clock.instant())));
+        });
     }
 
     @Transactional
     public void requestPasswordReset(String email) {
         users.findByEmail(normalize(email)).ifPresent(user -> {
+            users.lockById(user.getId()).orElseThrow(() -> new AuthenticationException("Please try again."));
             resetTokens.deleteByUserId(user.getId());
             String rawToken = secrets.generate();
             Instant now = clock.instant();
@@ -125,8 +132,14 @@ public class AuthService {
 
     @Transactional
     public void confirmPasswordReset(String rawToken, String newPassword) {
+        String tokenHash = secrets.hash(rawToken);
+        UUID ownerId = resetTokens.ownerOf(tokenHash)
+                .orElseThrow(() -> new AuthenticationException("The password reset link is invalid or expired."));
+        // Load the token only after locking, so a concurrent confirmation sees usedAt.
+        // Refresh and reset issuance use this same lock and cannot escape reset revocation.
+        users.lockById(ownerId).orElseThrow(() -> new AuthenticationException("The password reset link is invalid or expired."));
         Instant now = clock.instant();
-        PasswordResetTokenEntity token = resetTokens.findByTokenHash(secrets.hash(rawToken))
+        PasswordResetTokenEntity token = resetTokens.findByTokenHash(tokenHash)
                 .filter(candidate -> candidate.isUsableAt(now))
                 .orElseThrow(() -> new AuthenticationException("The password reset link is invalid or expired."));
         token.getUser().changePassword(passwordEncoder.encode(newPassword), now);

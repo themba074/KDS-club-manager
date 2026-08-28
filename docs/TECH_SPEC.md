@@ -120,6 +120,15 @@ This can migrate to schema-per-tenant later for large/enterprise clubs if needed
 ## 4. Authentication & Authorization
 
 ### Authentication
+- Password-reset issuance/confirmation, refresh rotation and logout share a
+  per-user database lock. Confirmation reads the reset token after locking,
+  checks expiry, marks it used and revokes refresh sessions in one transaction.
+  Logout revokes the supplied token's entire family, including descendants
+  already issued by a concurrent refresh; unrelated login sessions remain valid.
+- Browser logout joins the refresh/selection queue, invalidates stale responses,
+  and blocks new requests while pending. A failed logout leaves a retry action
+  instead of falsely reporting success. These changes do not revoke already
+  issued access JWTs; their existing 15-minute expiry still applies.
 - Email/password with **JWT** access tokens (short-lived, ~15 min) + refresh tokens (longer-lived, stored securely, rotated on use).
 - Password hashing via **BCrypt**.
 - JWT payload includes: `userId`, `clubId` (active tenant context), and a list of **permissions** (not raw roles) resolved at login/token-refresh time.

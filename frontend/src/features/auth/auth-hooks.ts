@@ -1,6 +1,14 @@
-import { useMutation } from "@tanstack/react-query"
-import { api, type AuthResponse } from "./auth-api"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { api, logoutSession, type AuthResponse } from "./auth-api"
 import { useAuthStore } from "./auth-store"
+
+export function useLogout() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: logoutSession,
+    onSuccess: () => queryClient.clear(),
+  })
+}
 
 export function useAuthenticate(path: "login" | "register") {
   const setSession = useAuthStore((state) => state.setSession)
