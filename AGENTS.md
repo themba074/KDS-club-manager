@@ -9,7 +9,7 @@ docs/PRD.md and docs/TECH_SPEC.md for full detail — this file is a
 summary for agent context, not the full spec.
 
 ## Stack
-- Frontend: React 18 + TypeScript + Vite, Zustand (client state), TanStack
+- Frontend: React 19 + TypeScript + Vite, Zustand (client state), TanStack
   Query (server state), React Router, Tailwind CSS, shadcn/ui
 - Backend: Java 21, Spring Boot 4.1.0, Spring Security (JWT), Spring Data
   JPA, MapStruct, Flyway
@@ -85,10 +85,10 @@ either of you can pick up the other's feature if it makes sense.
 - Identity bootstrap (create/list/select clubs) is authenticated-user-scoped;
   it must work before a club is selected. All tenant-data reads require
   TenantContext and explicit repository predicates (see TECH_SPEC section 3).
-- Implemented on `codex/roles-permissions`, awaiting review: #4 — seeded
-  global Investment Club role catalog, scoped assignments, current-permission
-  backend checks, last-manager protection, and permission-aware UI.
-- Next required: review and merge #4, then #5 — invites and member directory.
+- Landed on `main`: #4 — seeded global Investment Club role catalog, scoped
+  assignments, current-permission backend checks, last-manager protection,
+  and permission-aware UI.
+- Next required: #5 — invites and member directory.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
