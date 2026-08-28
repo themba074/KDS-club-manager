@@ -166,11 +166,31 @@ include the same permission snapshot. The browser uses permissions for
 navigation, route guards and assignment controls. Changes to another user's
 UI become visible on refresh/login; backend revocation does not wait for
 their token to expire. The assigning user's session is refreshed after saving.
-Frontend cache keys contain the club ID. Member invitations remain Feature 5.
+Frontend cache keys contain the club ID. Member onboarding is described in the
+Feature 5 section below.
 
 Finance/document business endpoints remain future work. Feature 4's integration
 tests use test-only secured operations to verify Treasurer/Member allow-deny
 behavior; no placeholder financial write endpoint is shipped.
+
+#### Feature 5 member invitations and directory
+
+- Pending invitations are separate from `club_memberships`, so an invited
+  email has no tenant access until its invitation is accepted.
+- Invitation secrets are random, stored only as SHA-256 hashes, expire after
+  seven days, and are locked and marked used during acceptance. The public
+  token bootstrap endpoints expose preview and acceptance only.
+- Acceptance creates an Identity user when necessary, or links an existing
+  account after email-link possession proves access. It then creates the
+  membership/profile atomically and returns a selected-club session.
+- Members owns invitation/profile persistence. It obtains active membership
+  identity data through a public Identity application service rather than
+  reaching into Identity repositories.
+- `GET /api/v1/members` requires `MEMBERS_READ` and supports search/status
+  filtering. `POST /api/v1/member-invitations` requires `MEMBERS_WRITE` and
+  creates Member-role invitations. Role elevation remains in role management.
+- Development delivery logs the acceptance URL. Real email delivery remains
+  the responsibility of Feature 15's notification service.
 
 #### General authorization rules
 

@@ -103,7 +103,7 @@ can skip the full explanation, but still summarize what you did
 afterward. When in doubt, explain first.
 
 ## Stack
-- Frontend: React 18 + TypeScript + Vite, Zustand (client state), TanStack
+- Frontend: React 19 + TypeScript + Vite, Zustand (client state), TanStack
   Query (server state), React Router, Tailwind CSS, shadcn/ui
 - Backend: Java 21, Spring Boot 4.1.0, Spring Security (JWT), Spring Data
   JPA, MapStruct, Flyway
