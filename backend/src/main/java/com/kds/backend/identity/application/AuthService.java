@@ -63,6 +63,20 @@ public class AuthService {
         return newSession(user, UUID.randomUUID(), clock.instant());
     }
 
+    @Transactional
+    public TokenPair startInvitationSession(UUID userId, UUID clubId) {
+        UserEntity user = users.findById(userId)
+                .orElseThrow(() -> new AuthenticationException("The invited account is unavailable."));
+        ClubSummary activeClub = clubs.requireMembership(userId, clubId);
+        Instant now = clock.instant();
+        String rawRefreshToken = secrets.generate();
+        RefreshTokenEntity refreshToken = new RefreshTokenEntity(UUID.randomUUID(), user,
+                secrets.hash(rawRefreshToken), UUID.randomUUID(), now.plus(refreshTokenTtl), now);
+        refreshToken.selectClub(clubId);
+        refreshTokens.save(refreshToken);
+        return pair(user, rawRefreshToken, activeClub);
+    }
+
     @Transactional(noRollbackFor = AuthenticationException.class)
     public TokenPair refresh(String rawToken) {
         return rotate(rawToken, null, null);

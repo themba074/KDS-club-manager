@@ -49,6 +49,11 @@ public class ClubService {
         return requireMembership(userId, clubId);
     }
 
+    /** Token-bootstrap lookup used only after the Members module validates an invitation secret. */
+    public String invitationClubName(UUID clubId) {
+        return access.clubName(clubId).orElseThrow(() -> new AccessDeniedException("The invited club is unavailable."));
+    }
+
     private ClubSummary summary(ClubMembershipEntity membership) {
         ClubSummary club = mapper.summary(membership);
         var permissions = roles.requireRole(club.clubType(), membership.getRoleCode()).permissions()

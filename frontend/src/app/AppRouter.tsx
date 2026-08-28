@@ -8,6 +8,7 @@ import { DashboardPage } from "@/features/dashboard"
 import { DocumentsPage } from "@/features/documents"
 import { MeetingsPage } from "@/features/meetings"
 import { MembersPage } from "@/features/members"
+import { AcceptInvitationPage } from "@/features/members/AcceptInvitationPage"
 import { NotificationsPage } from "@/features/notifications"
 import { ReportsPage } from "@/features/reports"
 import { VotingPage } from "@/features/voting"
@@ -26,6 +27,7 @@ export function AppRouter() {
         <Route path="register" element={<CredentialsPage mode="register" />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="accept-invitation" element={<AcceptInvitationPage />} />
         <Route element={<ProtectedRoute />}>
         <Route path="clubs" element={<ClubWorkspacePage />} />
         <Route element={<RequireClub />}>

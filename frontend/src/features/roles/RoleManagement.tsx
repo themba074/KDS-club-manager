@@ -38,7 +38,7 @@ export function RoleManagement() {
       <ul className="mt-2 space-y-1 text-sm text-muted-foreground">{role.permissions.map((permission) => <li key={permission}>{permission.replaceAll("_", " ").toLowerCase()}</li>)}</ul>
     </article>)}</div>
     {canManage && <section className="space-y-4"><h2 className="text-xl font-semibold">Member roles</h2>
-      <p className="text-sm text-muted-foreground">Each member has one role. Keep at least one administrator. Inviting new members comes in Feature 5.</p>
+      <p className="text-sm text-muted-foreground">Each member has one role. Keep at least one administrator. Invite new members from the Members page.</p>
       {members.isPending && <p role="status">Loading members…</p>}
       {members.error && <div role="alert"><p>{errorMessage(members.error)}</p><Button onClick={() => void members.refetch()}>Retry</Button></div>}
       {members.data?.length === 0 && <p>No memberships found.</p>}

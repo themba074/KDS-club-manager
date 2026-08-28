@@ -4,12 +4,8 @@ import com.kds.backend.identity.application.AuthService;
 import com.kds.backend.identity.application.TokenPair;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
-import java.time.Duration;
 import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -21,29 +17,27 @@ import static com.kds.backend.identity.api.AuthDtos.*;
 public class AuthController {
     private static final String REFRESH_COOKIE = "kds_refresh_token";
     private final AuthService authService;
-    private final boolean secureCookie;
-    private final Duration refreshTokenTtl;
+    private final AuthSessionResponder sessions;
 
-    public AuthController(AuthService authService,
-                          @Value("${app.auth.refresh-cookie-secure}") boolean secureCookie,
-                          @Value("${app.auth.refresh-token-ttl}") Duration refreshTokenTtl) {
-        this.authService = authService; this.secureCookie = secureCookie; this.refreshTokenTtl = refreshTokenTtl;
+    public AuthController(AuthService authService, AuthSessionResponder sessions) {
+        this.authService = authService;
+        this.sessions = sessions;
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
-        return respond(authService.register(request.email(), request.password()), response);
+        return sessions.respond(authService.register(request.email(), request.password()), response);
     }
 
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        return respond(authService.login(request.email(), request.password()), response);
+        return sessions.respond(authService.login(request.email(), request.password()), response);
     }
 
     @PostMapping("/refresh")
     public AuthResponse refresh(@CookieValue(REFRESH_COOKIE) String refreshToken, HttpServletResponse response) {
-        return respond(authService.refresh(refreshToken), response);
+        return sessions.respond(authService.refresh(refreshToken), response);
     }
 
     @PostMapping("/logout")
@@ -51,7 +45,7 @@ public class AuthController {
     public void logout(@CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
                        HttpServletResponse response) {
         authService.logout(refreshToken);
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie("", 0).toString());
+        sessions.clear(response);
     }
 
     @PostMapping("/select-club")
@@ -59,7 +53,7 @@ public class AuthController {
                                    @Valid @RequestBody SelectClubRequest request,
                                    @CookieValue(value = REFRESH_COOKIE, required = false) String refreshToken,
                                    HttpServletResponse response) {
-        return respond(authService.selectClub(UUID.fromString(principal.getSubject()), refreshToken, request.clubId()), response);
+        return sessions.respond(authService.selectClub(UUID.fromString(principal.getSubject()), refreshToken, request.clubId()), response);
     }
 
     @PostMapping("/password-reset/request")
@@ -75,14 +69,4 @@ public class AuthController {
         return new MessageResponse("Your password has been reset. You can now log in.");
     }
 
-    private AuthResponse respond(TokenPair pair, HttpServletResponse response) {
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie(pair.refreshToken(), refreshTokenTtl.toSeconds()).toString());
-        return new AuthResponse(pair.accessToken(), pair.accessTokenExpiresInSeconds(),
-                new UserResponse(pair.userId(), pair.email()), pair.activeClub());
-    }
-
-    private ResponseCookie refreshCookie(String value, long maxAge) {
-        return ResponseCookie.from(REFRESH_COOKIE, value).httpOnly(true).secure(secureCookie)
-                .sameSite("Strict").path("/api/v1/auth").maxAge(maxAge).build();
-    }
 }

@@ -100,6 +100,20 @@ Backend permission removal applies on subsequent requests even with an older
 JWT. Another user's UI updates when their session refreshes or they log in
 again. The 8-character password minimum and port 5175 are unchanged.
 
+## Member invitations and directory (Feature 5)
+
+Open **Members** after selecting a club. Users with `MEMBERS_WRITE` can invite
+a person using their name, email, and optional phone number. Invitations join
+with the Member role; administrators can change the role after acceptance.
+The directory distinguishes pending invitations from active memberships and
+supports name, email, phone, and status filtering.
+
+Local Docker development prints invitation links to the output of
+`docker compose logs backend`. Following the link creates an account when the email is new, or
+links the club to an existing account. Acceptance signs the person in and
+selects the invited club. Links expire after seven days and can be used once.
+Real email delivery remains part of the later notification feature.
+
 ## Run checks without Docker
 
 Backend (Java 21):

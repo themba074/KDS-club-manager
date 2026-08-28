@@ -29,4 +29,9 @@ public class ClubAccessRepository {
         return entityManager.createQuery("select m from ClubMembershipEntity m join fetch m.club where m.userId = :userId and m.club.id = :clubId", ClubMembershipEntity.class)
                 .setParameter("userId", userId).setParameter("clubId", clubId).getResultList().stream().findFirst();
     }
+
+    public Optional<String> clubName(UUID clubId) {
+        return entityManager.createQuery("select c.name from ClubEntity c where c.id = :clubId", String.class)
+                .setParameter("clubId", clubId).getResultList().stream().findFirst();
+    }
 }
