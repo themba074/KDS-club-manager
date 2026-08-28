@@ -4,6 +4,8 @@ import com.kds.backend.identity.application.AuthService;
 import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.ClubSummary;
 import com.kds.backend.identity.application.MembershipOnboardingService;
+import com.kds.backend.identity.application.MemberIdentityDirectoryService;
+import com.kds.backend.identity.application.IdentityDirectoryMember;
 import com.kds.backend.identity.application.SecretTokenService;
 import com.kds.backend.identity.application.TenantContext;
 import com.kds.backend.members.domain.MemberInvitationEntity;
@@ -28,13 +30,14 @@ class MemberServiceTests {
     private final MemberRepository repository = mock(MemberRepository.class);
     private final ClubService clubs = mock(ClubService.class);
     private final MembershipOnboardingService onboarding = mock(MembershipOnboardingService.class);
+    private final MemberIdentityDirectoryService identityDirectory = mock(MemberIdentityDirectoryService.class);
     private final AuthService authentication = mock(AuthService.class);
     private final SecretTokenService secrets = mock(SecretTokenService.class);
     private final MemberInvitationDelivery delivery = mock(MemberInvitationDelivery.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-28T08:00:00Z"), ZoneOffset.UTC);
     private final UUID actor = UUID.randomUUID();
     private final UUID clubId = UUID.randomUUID();
-    private final MemberService service = new MemberService(repository, clubs, onboarding, authentication,
+    private final MemberService service = new MemberService(repository, clubs, onboarding, identityDirectory, authentication,
             secrets, delivery, clock, Duration.ofDays(7));
 
     @BeforeEach void setContext() { TenantContext.set(clubId); }
@@ -60,12 +63,13 @@ class MemberServiceTests {
         when(clubs.requireMembership(actor, clubId)).thenReturn(club());
         assertThrows(AccessDeniedException.class, () -> service.directory(actor, null, null));
         assertThrows(AccessDeniedException.class, () -> service.invite(actor, "person@example.test", "A", "B", null));
-        verifyNoInteractions(repository);
+        verifyNoInteractions(repository, identityDirectory);
     }
 
     @Test void directoryFiltersCombinedActiveAndInvitedEntries() {
         when(clubs.requireMembership(actor, clubId)).thenReturn(club("MEMBERS_READ"));
-        when(repository.activeMembers()).thenReturn(List.of(entry("active@example.test", "Thandi", MemberDirectoryEntry.MemberStatus.ACTIVE)));
+        when(identityDirectory.activeMembers()).thenReturn(List.of(new IdentityDirectoryMember(UUID.randomUUID(), "active@example.test", "MEMBER", clock.instant())));
+        when(repository.profiles()).thenReturn(List.of());
         when(repository.pendingInvitations()).thenReturn(List.of(entry("pending@example.test", "Sipho", MemberDirectoryEntry.MemberStatus.INVITED)));
         var result = service.directory(actor, "sipho", MemberDirectoryEntry.MemberStatus.INVITED);
         assertEquals(List.of("pending@example.test"), result.stream().map(MemberDirectoryEntry::email).toList());

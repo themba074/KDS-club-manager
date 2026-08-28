@@ -27,4 +27,8 @@ public class MemberProfileEntity {
         this.phone = phone;
         this.createdAt = createdAt;
     }
+    public UUID getMembershipId() { return membershipId; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getPhone() { return phone; }
 }

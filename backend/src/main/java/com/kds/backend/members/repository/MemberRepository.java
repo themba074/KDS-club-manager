@@ -20,12 +20,6 @@ public class MemberRepository {
     public void saveInvitation(MemberInvitationEntity invitation) { entityManager.persist(invitation); }
     public void saveProfile(MemberProfileEntity profile) { entityManager.persist(profile); }
 
-    public boolean membershipEmailExists(String email) {
-        return !entityManager.createQuery("select m.id from ClubMembershipEntity m, UserEntity u where m.userId = u.id and m.club.id = :clubId and u.email = :email", UUID.class)
-                .setParameter("clubId", TenantContext.requireClubId()).setParameter("email", email)
-                .setMaxResults(1).getResultList().isEmpty();
-    }
-
     public boolean invitationEmailExists(String email) {
         return !entityManager.createQuery("select i.id from MemberInvitationEntity i where i.clubId = :clubId and i.email = :email", UUID.class)
                 .setParameter("clubId", TenantContext.requireClubId()).setParameter("email", email)
@@ -43,22 +37,8 @@ public class MemberRepository {
                 .setParameter("tokenHash", tokenHash).getResultList().stream().findFirst();
     }
 
-    public String clubName(UUID clubId) {
-        return entityManager.createQuery("select c.name from ClubEntity c where c.id = :clubId", String.class)
-                .setParameter("clubId", clubId).getSingleResult();
-    }
-
-    public List<MemberDirectoryEntry> activeMembers() {
-        return entityManager.createQuery("""
-                select new com.kds.backend.members.application.MemberDirectoryEntry(
-                    m.id, u.email, p.firstName, p.lastName, p.phone, m.roleCode,
-                    com.kds.backend.members.application.MemberDirectoryEntry$MemberStatus.ACTIVE, m.createdAt)
-                from ClubMembershipEntity m
-                join UserEntity u on u.id = m.userId
-                left join MemberProfileEntity p on p.membershipId = m.id and p.clubId = :clubId
-                where m.club.id = :clubId
-                order by u.email
-                """, MemberDirectoryEntry.class)
+    public List<MemberProfileEntity> profiles() {
+        return entityManager.createQuery("select p from MemberProfileEntity p where p.clubId = :clubId", MemberProfileEntity.class)
                 .setParameter("clubId", TenantContext.requireClubId()).getResultList();
     }
 
