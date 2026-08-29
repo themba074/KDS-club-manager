@@ -62,8 +62,8 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum are committed at b66e90e
   (the current local origin/main reference).
-- Features #0–#4 are merged on `main`; #5 is implemented on
-  `feature/member-invites-directory` and awaiting review.
+- Features #0–#5 are merged on `main`; #6 is in progress on
+  `feature/member-status-import`.
 
 ## Current Build Status
 - Phase: Members
@@ -89,11 +89,11 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #4 — seeded global Investment Club role catalog, scoped
   assignments, current-permission backend checks, last-manager protection,
   and permission-aware UI.
-- Implemented on `feature/member-invites-directory`, awaiting review: #5 —
-  tenant-scoped, expiring member invitations; new/existing-account acceptance;
-  member profiles; searchable/filterable directory; and isolation tests.
-- Next required: review and merge #5, then #6 — member status lifecycle and
-  CSV bulk import.
+- Landed on `main`: #5 — tenant-scoped, expiring member invitations;
+  new/existing-account acceptance; member profiles; searchable/filterable
+  directory; and isolation tests.
+- In progress on `feature/member-status-import`: #6 — member status lifecycle
+  and CSV bulk import.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
