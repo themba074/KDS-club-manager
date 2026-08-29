@@ -192,6 +192,30 @@ behavior; no placeholder financial write endpoint is shipped.
 - Development delivery logs the acceptance URL. Real email delivery remains
   the responsibility of Feature 15's notification service.
 
+#### Feature 7 contribution schedules
+
+- Contributions owns stable schedule identities, immutable effective-dated
+  revisions, and revision-specific member assignment snapshots. It accesses
+  tenant members only through the public Members application service.
+- `CONTRIBUTIONS_WRITE` creates schedules and revisions; `CONTRIBUTIONS_READ`
+  lists current revisions and calculated expectations. Application services
+  re-check write permission under the same club lock used by member lifecycle
+  changes, preventing role/status changes from racing an assignment snapshot.
+- Amounts use `NUMERIC(19,2)`/`BigDecimal` and currently use explicit `ZAR`.
+  Monthly schedules retain their original due-day, clamped to month-end;
+  once-off schedules produce one expectation. Date-range calculation is capped
+  at one year.
+- An edit closes the previous revision on the day before the new effective
+  date and inserts a new row. Feature 8 payments will reference the immutable
+  revision ID, so a later schedule edit cannot rewrite a recorded payment's
+  terms. Feature 7 calculates expectations but does not create payment/ledger
+  rows or move money.
+
+Endpoints under `/api/v1/contribution-schedules` are tenant scoped: list/create,
+`PUT /{scheduleId}` for revision creation, `/assignable-members`, and
+`/upcoming?from=YYYY-MM-DD&to=YYYY-MM-DD`. Foreign IDs are deliberately reported
+as unavailable rather than revealing another tenant's records.
+
 #### General authorization rules
 
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)

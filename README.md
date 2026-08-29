@@ -114,6 +114,25 @@ links the club to an existing account. Acceptance signs the person in and
 selects the invited club. Links expire after seven days and can be used once.
 Real email delivery remains part of the later notification feature.
 
+## Contribution schedules (Feature 7)
+
+Open **Contributions** after selecting a club. Administrators and Treasurers
+can create monthly or once-off schedules, choose all currently active members
+or a selected subset, and view upcoming expected contributions. Other active
+members have a read-only view.
+
+Assignments are snapshots: a member joining later is not silently added.
+Choose **Create revision** to change terms or assignments. The new terms start
+on the selected effective date and the previous revision is retained; existing
+or future payment records are therefore not rewritten. Schedule dates cannot
+start in the past, the amount supports two decimal places, and the current
+currency is ZAR. This feature tracks expectations only—recording payments and
+member ledgers belong to Feature 8.
+
+Flyway migration V6 creates the schedule, version, and assignment tables. No
+manual database changes are required. Tenant and permission checks are applied
+on the server even when controls are hidden in the browser.
+
 ## Run checks without Docker
 
 Backend (Java 21):
