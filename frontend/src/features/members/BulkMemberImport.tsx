@@ -31,8 +31,8 @@ export function BulkMemberImport() {
     confirmation.reset()
     inspection.mutate(file, { onSuccess: ({ headers }) => setMapping({
       emailColumn: guess(headers, ["email", "emailaddress"]),
-      firstNameColumn: guess(headers, ["firstname", "givenname"]),
-      lastNameColumn: guess(headers, ["lastname", "surname", "familyname"]),
+      firstNameColumn: guess(headers, ["first", "firstname", "givenname"]),
+      lastNameColumn: guess(headers, ["last", "lastname", "surname", "familyname"]),
       phoneColumn: guess(headers, ["phone", "phonenumber", "mobile"]) || undefined,
     }) })
   }
