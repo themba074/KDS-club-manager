@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -24,6 +25,17 @@ public class MemberRepository {
         return !entityManager.createQuery("select i.id from MemberInvitationEntity i where i.clubId = :clubId and i.email = :email", UUID.class)
                 .setParameter("clubId", TenantContext.requireClubId()).setParameter("email", email)
                 .setMaxResults(1).getResultList().isEmpty();
+    }
+
+    public Set<String> invitationEmails(Set<String> emails) {
+        if (emails.isEmpty()) return Set.of();
+        return Set.copyOf(entityManager.createQuery("""
+                select i.email from MemberInvitationEntity i
+                where i.clubId = :clubId and i.email in :emails
+                """, String.class)
+                .setParameter("clubId", TenantContext.requireClubId())
+                .setParameter("emails", emails)
+                .getResultList());
     }
 
     public Optional<MemberInvitationEntity> lockByTokenHash(String tokenHash) {
