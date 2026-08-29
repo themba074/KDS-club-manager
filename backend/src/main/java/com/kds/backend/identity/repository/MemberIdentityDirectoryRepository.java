@@ -15,7 +15,7 @@ public class MemberIdentityDirectoryRepository {
 
     public List<IdentityDirectoryMember> activeMembers() {
         return entityManager.createQuery("""
-                select new com.kds.backend.identity.application.IdentityDirectoryMember(m.id, u.email, m.roleCode, m.createdAt)
+                select new com.kds.backend.identity.application.IdentityDirectoryMember(m.id, u.email, m.roleCode, m.status, m.createdAt)
                 from ClubMembershipEntity m, UserEntity u
                 where m.userId = u.id and m.club.id = :clubId
                 order by u.email

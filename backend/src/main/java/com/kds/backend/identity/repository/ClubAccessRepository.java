@@ -21,12 +21,12 @@ public class ClubAccessRepository {
     }
 
     public List<ClubMembershipEntity> membershipsForUser(UUID userId) {
-        return entityManager.createQuery("select m from ClubMembershipEntity m join fetch m.club where m.userId = :userId order by m.club.name, m.club.id", ClubMembershipEntity.class)
+        return entityManager.createQuery("select m from ClubMembershipEntity m join fetch m.club where m.userId = :userId and m.status = 'ACTIVE' order by m.club.name, m.club.id", ClubMembershipEntity.class)
                 .setParameter("userId", userId).getResultList();
     }
 
     public Optional<ClubMembershipEntity> membership(UUID userId, UUID clubId) {
-        return entityManager.createQuery("select m from ClubMembershipEntity m join fetch m.club where m.userId = :userId and m.club.id = :clubId", ClubMembershipEntity.class)
+        return entityManager.createQuery("select m from ClubMembershipEntity m join fetch m.club where m.userId = :userId and m.club.id = :clubId and m.status = 'ACTIVE'", ClubMembershipEntity.class)
                 .setParameter("userId", userId).setParameter("clubId", clubId).getResultList().stream().findFirst();
     }
 
