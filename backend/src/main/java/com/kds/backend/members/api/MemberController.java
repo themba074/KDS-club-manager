@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static com.kds.backend.members.api.MemberDtos.AcceptInvitationRequest;
 import static com.kds.backend.members.api.MemberDtos.InviteMemberRequest;
+import static com.kds.backend.members.api.MemberDtos.ChangeMemberStatusRequest;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -45,6 +46,14 @@ public class MemberController {
                                        @Valid @RequestBody InviteMemberRequest request) {
         return members.invite(UUID.fromString(principal.getSubject()), request.email(), request.firstName(),
                 request.lastName(), request.phone());
+    }
+
+    @PatchMapping("/members/{membershipId}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('MEMBERS_WRITE')")
+    public void changeStatus(@AuthenticationPrincipal Jwt principal, @PathVariable UUID membershipId,
+                             @Valid @RequestBody ChangeMemberStatusRequest request) {
+        members.changeStatus(UUID.fromString(principal.getSubject()), membershipId, request.status());
     }
 
     @GetMapping("/member-invitations/accept")

@@ -18,7 +18,7 @@ public class RoleMembershipRepository {
             .setParameter("clubId", TenantContext.requireClubId()).setLockMode(LockModeType.PESSIMISTIC_WRITE).getSingleResult();
     }
     public List<RoleMember> members() {
-        return entityManager.createQuery("select new com.kds.backend.identity.application.RoleMember(m.id, u.email, m.roleCode) from ClubMembershipEntity m, UserEntity u where m.userId = u.id and m.club.id = :clubId order by u.email", RoleMember.class)
+        return entityManager.createQuery("select new com.kds.backend.identity.application.RoleMember(m.id, u.email, m.roleCode) from ClubMembershipEntity m, UserEntity u where m.userId = u.id and m.club.id = :clubId and m.status = 'ACTIVE' order by u.email", RoleMember.class)
             .setParameter("clubId", TenantContext.requireClubId()).getResultList();
     }
     public Optional<ClubMembershipEntity> membership(UUID membershipId) {

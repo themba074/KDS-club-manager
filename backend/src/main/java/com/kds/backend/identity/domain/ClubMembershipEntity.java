@@ -12,6 +12,7 @@ public class ClubMembershipEntity {
     @JoinColumn(name = "club_id", nullable = false) private ClubEntity club;
     @Column(name = "user_id", nullable = false) private UUID userId;
     @Column(name = "role_code", nullable = false) private String roleCode;
+    @Column(nullable = false, length = 20) private String status;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
 
     protected ClubMembershipEntity() {}
@@ -20,6 +21,7 @@ public class ClubMembershipEntity {
         this.club = club;
         this.userId = userId;
         this.roleCode = administrator ? "ADMINISTRATOR" : "MEMBER";
+        this.status = "ACTIVE";
         this.createdAt = now;
     }
     public ClubEntity getClub() { return club; }
@@ -27,5 +29,7 @@ public class ClubMembershipEntity {
     public UUID getId() { return id; }
     public UUID getUserId() { return userId; }
     public String getRoleCode() { return roleCode; }
+    public String getStatus() { return status; }
     public void assignRole(String roleCode) { this.roleCode = roleCode; }
+    public void changeStatus(String status) { this.status = status; }
 }

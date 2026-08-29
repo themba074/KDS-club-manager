@@ -60,10 +60,10 @@ see docs/TEAM_WORKFLOW.md §7 for the complete sequence (#0–#21) and the
 filled-in prompt for each one. Assignment is a default, not a rule —
 either of you can pick up the other's feature if it makes sense.
 
-- Feature 3 and the 8-character password minimum are committed at b66e90e
-  (the current local origin/main reference).
-- Features #0–#4 are merged on `main`; #5 is implemented on
-  `feature/member-invites-directory` and awaiting review.
+- Feature 3 and the 8-character password minimum were originally committed
+  at b66e90e.
+- Features #0–#5 are merged on `main`; #6 is implemented on
+  `feature/member-status-import` and awaiting review.
 
 ## Current Build Status
 - Phase: Members
@@ -89,11 +89,16 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #4 — seeded global Investment Club role catalog, scoped
   assignments, current-permission backend checks, last-manager protection,
   and permission-aware UI.
-- Implemented on `feature/member-invites-directory`, awaiting review: #5 —
-  tenant-scoped, expiring member invitations; new/existing-account acceptance;
-  member profiles; searchable/filterable directory; and isolation tests.
-- Next required: review and merge #5, then #6 — member status lifecycle and
-  CSV bulk import.
+- Landed on `main`: #5 — tenant-scoped, expiring member invitations;
+  new/existing-account acceptance; member profiles; searchable/filterable
+  directory; and isolation tests.
+- Implemented on `feature/member-status-import`, awaiting review: #6 — active,
+  suspended, and exited membership transitions; immediate access revocation;
+  last-role-manager protection; stateless CSV inspection, column mapping,
+  validation preview, and partial invitation import; status/import UI; and
+  lifecycle, mixed-import, and tenant-isolation tests.
+- Next required after #6 is reviewed and merged: #7 — contribution schedule
+  definition for administrators.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
