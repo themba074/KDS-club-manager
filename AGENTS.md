@@ -62,11 +62,11 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#5 are merged on `main`; #6 is implemented on
-  `feature/member-status-import` and awaiting review.
+- Features #0–#6 are merged on `main`; #7 is implemented on
+  `feature/contribution-schedules` and awaiting review.
 
 ## Current Build Status
-- Phase: Members
+- Phase: Contributions
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -92,13 +92,17 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #5 — tenant-scoped, expiring member invitations;
   new/existing-account acceptance; member profiles; searchable/filterable
   directory; and isolation tests.
-- Implemented on `feature/member-status-import`, awaiting review: #6 — active,
+- Landed on `main`: #6 — active,
   suspended, and exited membership transitions; immediate access revocation;
   last-role-manager protection; stateless CSV inspection, column mapping,
   validation preview, and partial invitation import; status/import UI; and
   lifecycle, mixed-import, and tenant-isolation tests.
-- Next required after #6 is reviewed and merged: #7 — contribution schedule
-  definition for administrators.
+- Implemented on `feature/contribution-schedules`, awaiting review: #7 —
+  effective-dated monthly/once-off schedules, active-member assignment
+  snapshots, immutable revisions, upcoming expectations, permissions, and
+  tenant isolation.
+- Next required after #7 is reviewed and merged: #8 — payment tracking and
+  member ledgers.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

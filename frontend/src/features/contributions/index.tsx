@@ -1,15 +1,16 @@
-import { HandCoins } from "lucide-react"
-
-import { ModulePlaceholder } from "@/components/layout/ModulePlaceholder"
+import { useState } from "react"
+import { usePermission } from "@/features/roles/use-permission"
+import { ScheduleForm } from "./ScheduleForm"
+import { ScheduleList } from "./ScheduleList"
+import type { ContributionSchedule } from "./schedule-hooks"
 
 export function ContributionsPage() {
-  return (
-    <ModulePlaceholder
-      title="Contributions"
-      description="Track contribution schedules, payments, balances, and member ledgers."
-      emptyTitle="No contribution activity yet"
-      emptyDescription="Schedules and payment records will appear here once the contributions module is configured."
-      icon={HandCoins}
-    />
-  )
+  const canWrite=usePermission("CONTRIBUTIONS_WRITE")
+  const [editing,setEditing]=useState<ContributionSchedule|null>(null)
+  return <section className="space-y-6">
+    <header><h1 className="text-2xl font-semibold">Contributions</h1>
+      <p className="mt-2 text-muted-foreground">Define expected contributions without moving or collecting money.</p></header>
+    {canWrite&&<ScheduleForm editing={editing} onSaved={()=>setEditing(null)} onCancel={()=>setEditing(null)}/>}
+    <ScheduleList canWrite={canWrite} onEdit={setEditing}/>
+  </section>
 }

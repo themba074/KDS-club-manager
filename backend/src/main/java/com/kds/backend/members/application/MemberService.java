@@ -90,6 +90,29 @@ public class MemberService {
         return entries.sorted(Comparator.comparing(MemberDirectoryEntry::email)).toList();
     }
 
+    /** Public Members-module boundary used by Contributions; tenant context must already be established. */
+    public List<ContributionMember> activeContributionMembers() {
+        return contributionMembers().stream().filter(member -> member.active()).map(ContributionMember::withoutStatus).toList();
+    }
+
+    /** Serializes financial assignment snapshots with membership lifecycle changes. */
+    public List<ContributionMember> lockAndSnapshotActiveContributionMembers() {
+        lifecycle.lockClub();
+        return activeContributionMembers();
+    }
+
+    /** Resolves snapshotted assignments, including suspended/exited members, within the current tenant. */
+    public List<ContributionMember> contributionMembers() {
+        Map<UUID, MemberProfileEntity> profiles = members.profiles().stream()
+                .collect(Collectors.toMap(MemberProfileEntity::getMembershipId, Function.identity()));
+        return identityDirectory.activeMembers().stream().map(member -> {
+            MemberProfileEntity profile = profiles.get(member.membershipId());
+            String name = profile == null ? member.email() : (profile.getFirstName() + " " + profile.getLastName()).strip();
+            return new ContributionMember(member.membershipId(), member.email(), name.isBlank() ? member.email() : name,
+                    "ACTIVE".equals(member.status()));
+        }).sorted(Comparator.comparing(ContributionMember::displayName)).toList();
+    }
+
     @Transactional
     public MemberDirectoryEntry invite(UUID actor, String email, String firstName, String lastName, String phone) {
         require(actor, Permission.MEMBERS_WRITE);
