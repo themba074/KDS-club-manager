@@ -58,12 +58,28 @@ public class ContributionScheduleService {
     }
     public List<ExpectedContribution> upcoming(UUID actor,LocalDate from,LocalDate to) {
         require(actor,Permission.CONTRIBUTIONS_READ);
+        return expectations(from,to,null);
+    }
+    /** Contributions-module boundary used by payment tracking after it has performed its own permission check. */
+    public List<ExpectedContribution> expectationsForMembership(LocalDate from,LocalDate to,UUID membershipId) {
+        return expectations(from,to,membershipId);
+    }
+    public ExpectedContribution requireExpectation(UUID versionId,UUID membershipId,LocalDate dueDate) {
+        var version=schedules.version(versionId).orElseThrow(()->new AccessDeniedException("Contribution expectation is unavailable in this club."));
+        if(!schedules.assignments(versionId).contains(membershipId)||!dueDates(version,dueDate,dueDate).contains(dueDate))
+            throw new AccessDeniedException("Contribution expectation is unavailable in this club.");
+        ContributionMember member=memberDirectory().get(membershipId);
+        String email=member==null?"Former member":member.email(),name=member==null?"Former member":member.displayName();
+        return new ExpectedContribution(version.getScheduleId(),version.getId(),version.getName(),membershipId,email,name,dueDate,version.getAmount(),version.getCurrency());
+    }
+    private List<ExpectedContribution> expectations(LocalDate from,LocalDate to,UUID membershipId) {
         if (from==null || to==null || to.isBefore(from) || to.isAfter(from.plusYears(1)))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Choose a valid date range of at most one year.");
         Map<UUID,ContributionMember> directory=memberDirectory();
         List<ExpectedContribution> result=new ArrayList<>();
         for(var version:schedules.versionsOverlapping(from,to)) for(LocalDate due:dueDates(version,from,to))
             for(UUID memberId:schedules.assignments(version.getId())) {
+                if(membershipId!=null&&!membershipId.equals(memberId))continue;
                 ContributionMember member=directory.get(memberId);
                 // Historical assignments may reference a member who is no longer active; preserve the expectation without leaking another club.
                 String email=member==null ? "Former member" : member.email(); String name=member==null ? "Former member" : member.displayName();

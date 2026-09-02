@@ -126,12 +126,26 @@ Choose **Create revision** to change terms or assignments. The new terms start
 on the selected effective date and the previous revision is retained; existing
 or future payment records are therefore not rewritten. Schedule dates cannot
 start in the past, the amount supports two decimal places, and the current
-currency is ZAR. This feature tracks expectations only—recording payments and
-member ledgers belong to Feature 8.
+currency is ZAR.
 
 Flyway migration V6 creates the schedule, version, and assignment tables. No
 manual database changes are required. Tenant and permission checks are applied
 on the server even when controls are hidden in the browser.
+
+## Payment tracking and member ledger (Feature 8)
+
+Administrators and Treasurers can allocate a full or partial receipt to an
+outstanding member contribution from **Contributions**. A reference and note
+are optional, as is a PDF/JPEG/PNG proof of at most 1 MB. Proof bytes go through
+`FileStorageService`; local development stores them below `KDS_STORAGE_ROOT`
+(or the operating-system temporary directory when it is unset).
+
+Every active member sees **My ledger**, with expected, paid, outstanding, and
+chronological running balances. That API derives the membership from the
+authenticated user and current club; it has no member-ID input that could be
+changed to view somebody else's ledger. Payment and schedule queries also
+apply explicit `club_id` predicates. Flyway migration V7 creates the payment
+table and indexes.
 
 ## Run checks without Docker
 

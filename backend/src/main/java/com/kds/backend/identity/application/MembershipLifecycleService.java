@@ -21,6 +21,11 @@ public class MembershipLifecycleService {
                 .orElseThrow(() -> new AccessDeniedException("Membership is unavailable in this club."));
         return new MembershipLifecycleMember(membership.getId(), membership.getUserId(), membership.getRoleCode(), membership.getStatus());
     }
+    public MembershipLifecycleMember requireCurrentMembership(UUID userId) {
+        var membership = repository.membershipForUser(userId)
+                .orElseThrow(() -> new AccessDeniedException("Your active membership is unavailable in this club."));
+        return new MembershipLifecycleMember(membership.getId(), membership.getUserId(), membership.getRoleCode(), membership.getStatus());
+    }
     public List<MembershipLifecycleMember> memberships() { return repository.memberships(); }
 
     @Transactional
