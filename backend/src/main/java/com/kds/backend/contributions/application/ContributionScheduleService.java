@@ -64,6 +64,10 @@ public class ContributionScheduleService {
     public List<ExpectedContribution> expectationsForMembership(LocalDate from,LocalDate to,UUID membershipId) {
         return expectations(from,to,membershipId);
     }
+    /** Contributions-module boundary used by reporting after it has performed its own REPORTS_READ check. */
+    public List<ExpectedContribution> expectationsForReport(LocalDate from,LocalDate to) {
+        return expectations(from,to,null);
+    }
     public ExpectedContribution requireExpectation(UUID versionId,UUID membershipId,LocalDate dueDate) {
         var version=schedules.version(versionId).orElseThrow(()->new AccessDeniedException("Contribution expectation is unavailable in this club."));
         if(!schedules.assignments(versionId).contains(membershipId)||!dueDates(version,dueDate,dueDate).contains(dueDate))
