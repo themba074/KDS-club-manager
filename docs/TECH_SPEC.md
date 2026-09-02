@@ -235,6 +235,24 @@ as unavailable rather than revealing another tenant's records.
   boundary. The development adapter writes tenant/category-namespaced files;
   Feature 14 will supply the Supabase adapter and signed retrieval URLs.
 
+#### Feature 9 contribution reports
+
+- `GET /api/v1/contribution-reports/summary` returns club totals and a
+  per-member breakdown of expected, collected, and outstanding contributions
+  for a date range of at most one year. Both controller and application
+  service enforce `REPORTS_READ`.
+- `GET /api/v1/contribution-reports/export` accepts the same range and a
+  `CSV` or `PDF` format. It builds one authorized, tenant-scoped report
+  snapshot before streaming the selected representation, keeping the UI and
+  exports on the same aggregation rules.
+- Expected contributions are calculated from immutable schedule revisions;
+  receipts are loaded through a period query with an explicit `club_id`
+  predicate. Aggregation uses `BigDecimal` at two-decimal currency scale, and
+  outstanding values are clamped at zero so overpayment is not shown as debt.
+- CSV output is UTF-8 and neutralizes values beginning with spreadsheet
+  formula characters. PDF output uses Apache PDFBox and paginates member rows.
+  Export generation does not create report or temporary-file persistence.
+
 #### General authorization rules
 
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)

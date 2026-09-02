@@ -147,6 +147,19 @@ changed to view somebody else's ledger. Payment and schedule queries also
 apply explicit `club_id` predicates. Flyway migration V7 creates the payment
 table and indexes.
 
+## Contribution reports (Feature 9)
+
+Members with `REPORTS_READ` can open **Reports**, choose a date range of up to
+one year, and compare expected, collected, and outstanding contributions for
+the club and each member. Amounts retain two-decimal currency precision, and
+overpayments never appear as negative debt.
+
+The same server-side report snapshot powers the screen and downloadable CSV
+or PDF exports. CSV cells that begin with spreadsheet formula characters are
+escaped, and longer PDFs paginate automatically. Both report queries use the
+selected club from the authenticated tenant context and explicit `club_id`
+predicates; another club's records cannot appear in the result.
+
 ## Run checks without Docker
 
 Backend (Java 21):

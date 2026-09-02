@@ -62,8 +62,8 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#8 are merged on `main`; #9 is in progress on
-  `feature/contribution-reports`.
+- Features #0–#8 are merged on `main`; #9 is implemented on
+  `feature/contribution-reports` and awaiting review.
 
 ## Current Build Status
 - Phase: Contributions
@@ -105,9 +105,10 @@ either of you can pick up the other's feature if it makes sense.
   tenant-scoped partial payment tracking; optional proof storage; expected,
   paid, and running balances; and authenticated-member-only ledgers with
   privacy and tenant-isolation tests.
-- In progress on `feature/contribution-reports`: #9 — contribution summaries
-  with per-member expected, collected, and outstanding totals plus CSV/PDF
-  exports.
+- Implemented on `feature/contribution-reports`, awaiting review: #9 —
+  permission-protected, tenant-scoped contribution summaries with per-member
+  expected, collected, and outstanding totals; date-range filtering; and
+  CSV/PDF exports generated from the same report snapshot.
 - Next required after #9 is reviewed and merged: #10 — meeting scheduling and
   agenda management.
 
