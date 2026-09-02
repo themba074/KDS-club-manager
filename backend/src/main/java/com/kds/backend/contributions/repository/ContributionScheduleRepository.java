@@ -30,6 +30,10 @@ public class ContributionScheduleRepository {
         return entityManager.createQuery("select s from ContributionScheduleEntity s where s.clubId=:club and s.id=:id",ContributionScheduleEntity.class)
             .setParameter("club",TenantContext.requireClubId()).setParameter("id",id).setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList().stream().findFirst();
     }
+    public Optional<ContributionScheduleVersionEntity> version(UUID versionId) {
+        return entityManager.createQuery("select v from ContributionScheduleVersionEntity v where v.clubId=:club and v.id=:id",ContributionScheduleVersionEntity.class)
+            .setParameter("club",TenantContext.requireClubId()).setParameter("id",versionId).getResultList().stream().findFirst();
+    }
     public Optional<ContributionScheduleVersionEntity> latest(UUID scheduleId) {
         return entityManager.createQuery("select v from ContributionScheduleVersionEntity v where v.clubId=:club and v.scheduleId=:id order by v.versionNumber desc",ContributionScheduleVersionEntity.class)
             .setParameter("club",TenantContext.requireClubId()).setParameter("id",scheduleId).setMaxResults(1).getResultList().stream().findFirst();

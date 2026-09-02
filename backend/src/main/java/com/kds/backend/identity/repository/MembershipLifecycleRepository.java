@@ -29,6 +29,12 @@ public class MembershipLifecycleRepository {
                 .getResultList().stream().findFirst();
     }
 
+    public Optional<ClubMembershipEntity> membershipForUser(UUID userId) {
+        return entityManager.createQuery("select m from ClubMembershipEntity m where m.userId = :userId and m.club.id = :clubId and m.status = 'ACTIVE'", ClubMembershipEntity.class)
+                .setParameter("userId", userId).setParameter("clubId", TenantContext.requireClubId())
+                .getResultList().stream().findFirst();
+    }
+
     public List<MembershipLifecycleMember> memberships() {
         return entityManager.createQuery("""
                 select new com.kds.backend.identity.application.MembershipLifecycleMember(m.id, m.userId, m.roleCode, m.status)
