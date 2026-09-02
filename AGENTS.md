@@ -62,8 +62,8 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#7 are merged on `main`; #8 is implemented on
-  `feature/payment-ledger` and awaiting review.
+- Features #0–#8 are merged on `main`; #9 is in progress on
+  `feature/contribution-reports`.
 
 ## Current Build Status
 - Phase: Contributions
@@ -101,12 +101,15 @@ either of you can pick up the other's feature if it makes sense.
   effective-dated monthly/once-off schedules, active-member assignment
   snapshots, immutable revisions, upcoming expectations, permissions, and
   tenant isolation.
-- Implemented on `feature/payment-ledger`, awaiting review: #8 — immutable,
+- Landed on `main`: #8 — immutable,
   tenant-scoped partial payment tracking; optional proof storage; expected,
   paid, and running balances; and authenticated-member-only ledgers with
   privacy and tenant-isolation tests.
-- Next required after #8 is reviewed and merged: #9 — meeting creation and
-  attendance.
+- In progress on `feature/contribution-reports`: #9 — contribution summaries
+  with per-member expected, collected, and outstanding totals plus CSV/PDF
+  exports.
+- Next required after #9 is reviewed and merged: #10 — meeting scheduling and
+  agenda management.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
