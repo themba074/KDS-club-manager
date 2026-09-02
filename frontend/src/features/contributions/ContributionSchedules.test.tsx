@@ -7,10 +7,11 @@ const {get,post,put}=vi.hoisted(()=>({get:vi.fn(),post:vi.fn(),put:vi.fn()}))
 vi.mock("@/features/auth/auth-api",()=>({api:{get,post,put},errorMessage:()=>"Schedule failed"}))
 const member={membershipId:"member-1",email:"member@example.test",displayName:"Member One"}
 const schedule={scheduleId:"schedule-1",versionId:"version-1",versionNumber:1,name:"Monthly savings",amount:100,currency:"ZAR",frequency:"MONTHLY",firstDueDate:"2026-09-01",endDate:null,effectiveFrom:"2026-08-29",effectiveTo:null,assignmentMode:"ALL_CURRENT",assignedMembers:[member]}
+const ledger={membershipId:"member-1",from:"2026-01-01",to:"2026-12-31",totalExpected:100,totalPaid:40,balance:60,currency:"ZAR",lines:[]}
 beforeEach(()=>{
   vi.clearAllMocks()
   useAuthStore.getState().setSession("token",{id:"owner",email:"owner@example.test"},{id:"club-1",name:"Club",clubType:"INVESTMENT_CLUB",administrator:true,permissions:["CONTRIBUTIONS_READ","CONTRIBUTIONS_WRITE"]})
-  get.mockImplementation((path:string)=>Promise.resolve({data:path.endsWith("assignable-members")?[member]:path.endsWith("upcoming")?[]:[schedule]}))
+  get.mockImplementation((path:string)=>Promise.resolve({data:path.endsWith("assignable-members")?[member]:path.endsWith("my-ledger")?ledger:path.endsWith("expectations")||path.endsWith("upcoming")?[]:[schedule]}))
   post.mockResolvedValue({data:schedule});put.mockResolvedValue({data:{...schedule,versionNumber:2}})
 })
 function page(){const client=new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}});render(<QueryClientProvider client={client}><ContributionsPage/></QueryClientProvider>);return client}
