@@ -160,6 +160,20 @@ escaped, and longer PDFs paginate automatically. Both report queries use the
 selected club from the authenticated tenant context and explicit `club_id`
 predicates; another club's records cannot appear in the result.
 
+## Meeting scheduling and agendas (Feature 10)
+
+Open **Meetings** after selecting a club. Members with `MEETINGS_READ` can
+switch between upcoming and past meetings and see each meeting's ordered
+agenda. Administrators and Secretaries, through `MEETINGS_WRITE`, can schedule
+and edit upcoming meetings with a physical location, an online link, or both.
+
+Meeting start times preserve their submitted UTC offset. Past meetings cannot
+be edited, and concurrent edits are rejected instead of silently overwriting
+one another. Scheduling publishes a best-effort after-commit event containing
+the active-member audience; local development logs the notification stub.
+Feature 15 will connect that event to real in-app and email delivery. Flyway
+migration V8 creates the tenant-scoped meeting and agenda tables.
+
 ## Run checks without Docker
 
 Backend (Java 21):

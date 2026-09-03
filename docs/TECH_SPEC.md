@@ -253,6 +253,22 @@ as unavailable rather than revealing another tenant's records.
   formula characters. PDF output uses Apache PDFBox and paginates member rows.
   Export generation does not create report or temporary-file persistence.
 
+#### Meeting scheduling and agenda
+
+- Meetings and agenda items are tenant-owned records. Repository reads use an
+  explicit `club_id` predicate in addition to `TenantContext`, and agenda rows
+  carry `club_id` so isolation remains visible at the database boundary.
+- Meeting instants are stored as `TIMESTAMPTZ` together with the submitted UTC
+  offset for faithful API display. Agenda positions are unique per meeting and
+  are replaced as one ordered collection during an edit.
+- `MEETINGS_READ` protects upcoming/past views; `MEETINGS_WRITE` protects
+  scheduling and edits. Past meetings are immutable through the API, and JPA
+  optimistic versions reject stale concurrent edits with HTTP 409.
+- Created/updated meetings publish an after-commit, best-effort application
+  event with the active-member audience obtained through the Members public
+  application service. Feature 15 owns durable in-app/email delivery; failure
+  of this interim notification seam never rolls back meeting scheduling.
+
 #### General authorization rules
 
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)

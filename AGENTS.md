@@ -62,11 +62,11 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#8 are merged on `main`; #9 is implemented on
-  `feature/contribution-reports` and awaiting review.
+- Features #0–#9 are merged on `main`; #10 is implemented on
+  `feature/meeting-scheduling` and awaiting review.
 
 ## Current Build Status
-- Phase: Contributions
+- Phase: Meetings
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -105,12 +105,16 @@ either of you can pick up the other's feature if it makes sense.
   tenant-scoped partial payment tracking; optional proof storage; expected,
   paid, and running balances; and authenticated-member-only ledgers with
   privacy and tenant-isolation tests.
-- Implemented on `feature/contribution-reports`, awaiting review: #9 —
+- Landed on `main`: #9 —
   permission-protected, tenant-scoped contribution summaries with per-member
   expected, collected, and outstanding totals; date-range filtering; and
   CSV/PDF exports generated from the same report snapshot.
-- Next required after #9 is reviewed and merged: #10 — meeting scheduling and
-  agenda management.
+- Implemented on `feature/meeting-scheduling`, awaiting review: #10 —
+  tenant-scoped meeting scheduling and editing, ordered agendas, upcoming and
+  past views, permissions, optimistic edit protection, and a best-effort
+  notification event seam with isolation tests.
+- Next required after #10 is reviewed and merged: #11 — RSVP and minutes
+  capture/upload.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

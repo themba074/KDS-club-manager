@@ -95,6 +95,12 @@ public class MemberService {
         return contributionMembers().stream().filter(member -> member.active()).map(ContributionMember::withoutStatus).toList();
     }
 
+    /** Public Members-module boundary for best-effort meeting notifications. */
+    public List<MeetingAudienceMember> activeMeetingAudience() {
+        return contributionMembers().stream().filter(ContributionMember::active)
+                .map(member -> new MeetingAudienceMember(member.membershipId(), member.email(), member.displayName())).toList();
+    }
+
     /** Serializes financial assignment snapshots with membership lifecycle changes. */
     public List<ContributionMember> lockAndSnapshotActiveContributionMembers() {
         lifecycle.lockClub();
