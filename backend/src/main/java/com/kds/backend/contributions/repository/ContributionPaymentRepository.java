@@ -26,4 +26,8 @@ public class ContributionPaymentRepository {
             .setParameter("club",TenantContext.requireClubId()).setParameter("version",versionId)
             .setParameter("member",membershipId).setParameter("due",dueDate).getResultList();
     }
+    public List<ContributionPaymentEntity> forPeriod(LocalDate from,LocalDate to){
+        return entityManager.createQuery("select p from ContributionPaymentEntity p where p.clubId=:club and p.dueDate between :from and :to order by p.membershipId,p.dueDate,p.createdAt,p.id",ContributionPaymentEntity.class)
+            .setParameter("club",TenantContext.requireClubId()).setParameter("from",from).setParameter("to",to).getResultList();
+    }
 }
