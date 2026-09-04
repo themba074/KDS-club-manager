@@ -269,6 +269,24 @@ as unavailable rather than revealing another tenant's records.
   application service. Feature 15 owns durable in-app/email delivery; failure
   of this interim notification seam never rolls back meeting scheduling.
 
+#### RSVP and minutes
+
+- A meeting has at most one RSVP per membership. The membership ID is resolved
+  from the authenticated user and current tenant; clients cannot select the
+  membership they answer for. Responses close when the meeting starts.
+- `MEETINGS_WRITE` users receive aggregate Yes/No/Maybe counts. Ordinary
+  `MEETINGS_READ` users receive only their own response, preventing the count
+  endpoint from becoming an unintended membership-information channel.
+- Each meeting has one optimistic-versioned minutes record. Draft content and
+  attachments require `MEETINGS_WRITE`; published content requires
+  `MEETINGS_READ`. Publication is explicit and is never inferred from upload or
+  save operations. Editing published minutes returns them to draft so revisions
+  cannot become member-visible without another explicit publication.
+- Minutes accept safe text rather than executable HTML. Optional PDF, DOCX, and
+  text attachments are limited to 5 MB and stored through `FileStorageService`.
+  Its tenant-aware read boundary lets Feature 14 replace local storage without
+  changing Meetings, while all downloads remain backend-authorized.
+
 #### General authorization rules
 
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)
