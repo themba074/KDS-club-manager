@@ -174,6 +174,21 @@ the active-member audience; local development logs the notification stub.
 Feature 15 will connect that event to real in-app and email delivery. Flyway
 migration V8 creates the tenant-scoped meeting and agenda tables.
 
+## RSVP and meeting minutes (Feature 11)
+
+Expand **Participation and minutes** on a meeting card. Active members can
+answer Yes, No, or Maybe before the meeting begins and can change their answer.
+Members with `MEETINGS_WRITE` also see the current response totals without a
+page reload.
+
+After a meeting begins, administrators and secretaries can save draft minutes
+as safely rendered text and optionally attach a PDF, DOCX, or text
+file of at most 5 MB. Drafts and their attachments remain restricted to
+`MEETINGS_WRITE`; members with `MEETINGS_READ` gain access only after explicit
+publication. Attachment downloads pass through the backend permission and
+tenant checks rather than exposing storage paths. Flyway migration V9 creates
+the RSVP and minutes tables.
+
 ## Run checks without Docker
 
 Backend (Java 21):

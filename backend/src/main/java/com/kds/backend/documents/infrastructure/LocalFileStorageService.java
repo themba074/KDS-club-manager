@@ -22,6 +22,14 @@ public class LocalFileStorageService implements FileStorageService {
         String key=root.relativize(target).toString().replace('\\','/');
         return new StoredFile(key,fileName,contentType,content.length);
     }
+    @Override public StoredContent load(UUID clubId,String storageKey){
+        String clubPrefix=clubId.toString()+"/";
+        if(storageKey==null||!storageKey.replace('\\','/').startsWith(clubPrefix))throw new IllegalArgumentException("Invalid storage key.");
+        Path source=root.resolve(storageKey).normalize();
+        if(!source.startsWith(root.resolve(clubId.toString()).normalize()))throw new IllegalArgumentException("Invalid storage path.");
+        try{return new StoredContent(Files.readAllBytes(source),Files.probeContentType(source));}
+        catch(IOException exception){throw new IllegalStateException("The file could not be loaded.",exception);}
+    }
     private static String extension(String name){
         if(name==null)return ""; int dot=name.lastIndexOf('.');
         return dot<0||dot<name.length()-6?"":name.substring(dot).toLowerCase(java.util.Locale.ROOT).replaceAll("[^.a-z0-9]","");
