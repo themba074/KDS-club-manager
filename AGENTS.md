@@ -62,9 +62,7 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#9 are merged on `main`; #10 is implemented on
-  `feature/meeting-scheduling` and awaiting review. #11 is stacked on #10 in
-  `feature/meeting-rsvp-minutes` and must be reviewed after #10 lands.
+- Features #0–#11 are merged on `main`.
 
 ## Current Build Status
 - Phase: Meetings
@@ -110,16 +108,15 @@ either of you can pick up the other's feature if it makes sense.
   permission-protected, tenant-scoped contribution summaries with per-member
   expected, collected, and outstanding totals; date-range filtering; and
   CSV/PDF exports generated from the same report snapshot.
-- Implemented on `feature/meeting-scheduling`, awaiting review: #10 —
+- Landed on `main`: #10 —
   tenant-scoped meeting scheduling and editing, ordered agendas, upcoming and
   past views, permissions, optimistic edit protection, and a best-effort
   notification event seam with isolation tests.
-- Implemented on `feature/meeting-rsvp-minutes`, awaiting review after #10:
+- Landed on `main`: #11 —
   #11 — authenticated-member RSVP responses, manager counts, safe text
   draft/published minutes, tenant-authorized attachments, optimistic edit
   protection, and publication/isolation tests.
-- Next required after #10 and #11 are reviewed and merged: #12 — motion
-  creation and voting windows.
+- Next required: #12 — motion creation and voting windows.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
