@@ -65,7 +65,7 @@ either of you can pick up the other's feature if it makes sense.
 - Features #0–#11 are merged on `main`.
 
 ## Current Build Status
-- Phase: Meetings
+- Phase: Voting — Feature 12 pending review
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -116,7 +116,11 @@ either of you can pick up the other's feature if it makes sense.
   #11 — authenticated-member RSVP responses, manager counts, safe text
   draft/published minutes, tenant-authorized attachments, optimistic edit
   protection, and publication/isolation tests.
-- Next required: #12 — motion creation and voting windows.
+- Implemented locally, pending review on `feature/motion-voting-window`: #12 — motion creation,
+  window-derived state, eligible-member snapshots, draft/cancelled edits,
+  explicit cancellation, optimistic versions, and Voting UI. Completion and
+  verification notes are in `docs/NEW_ACCOUNT_HANDOVER.md`; not merged yet.
+- Next after #12 review/merge: #13 — vote casting, tally, lock, and publish.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

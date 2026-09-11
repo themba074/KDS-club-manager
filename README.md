@@ -4,6 +4,9 @@ KDS Club Manager is a configurable, multi-tenant operating system for
 membership organisations. The repository contains a Spring Boot API and a
 responsive React application.
 
+New to the project or using a new Codex account? Start with
+[the new-account handover guide](docs/NEW_ACCOUNT_HANDOVER.md).
+
 ## Run with Docker
 
 Prerequisites: Docker Desktop with Docker Compose.
@@ -189,6 +192,30 @@ publication. Attachment downloads pass through the backend permission and
 tenant checks rather than exposing storage paths. Flyway migration V9 creates
 the RSVP and minutes tables.
 
+## Motion creation and voting windows (Feature 12, pending review)
+
+Open **Voting** after selecting a club. Members with `VOTES_CREATE`
+(Administrators and Chairpersons by default) can create a motion with a title,
+description, two to twenty distinct options, opening/closing times, and either
+all currently active members or a selected voter set.
+
+Eligibility is a snapshot. Later joiners are not automatically added; editing
+preserves the selected snapshot unless you explicitly change it. Inactive or
+foreign-club memberships cannot be selected. Only managers receive the voter
+IDs for editing; other members see the count and their own eligibility.
+
+The server calculates `DRAFT`, `OPEN`, and `CLOSED` from the window: opening is
+inclusive and closing is exclusive. The page refreshes every 15 seconds while
+active. Drafts can be edited; open/closed motions require explicit cancellation
+before correction. A cancelled motion remains `CANCELLED` after editing and
+cannot reopen. Stale edits and cancellations return a conflict rather than
+overwriting newer changes.
+
+Migration V10 adds the tenant-scoped motion, option, and eligible-membership
+tables. Flyway applies it automatically; no database reset is needed. Actual
+vote casting, duplicate-vote prevention, tallies, and publication belong to
+Feature 13 and are not available yet.
+
 ## Run checks without Docker
 
 Backend (Java 21):
@@ -204,7 +231,7 @@ Frontend (Node.js 24):
 Set-Location frontend
 npm ci
 npm run lint
-npm run test:run
+npm run test:run -- --maxWorkers=1
 npm run build
 ```
 
