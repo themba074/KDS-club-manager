@@ -412,6 +412,10 @@ Each entry below is a filled-in starting point for that feature's prompt — cop
 
 **#12 — Motion Creation + Voting Window**
 
+- **Current implementation:** complete locally on `feature/motion-voting-window`,
+  pending review and merge. See `NEW_ACCOUNT_HANDOVER.md` for verification and
+  remaining handoff steps. Cancelled edits retain cancellation; there is no
+  reopen operation. Actual voting remains #13.
 - **Goal:** admins can create a motion (poll) with options and a defined voting window, scoped to eligible voters.
 - **Requirements:** motion creation (title, description, options, eligible-voter set, open/close time), automatic open/close based on window.
 - **Depends on:** #5 members.

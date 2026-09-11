@@ -287,6 +287,38 @@ as unavailable rather than revealing another tenant's records.
   Its tenant-aware read boundary lets Feature 14 replace local storage without
   changing Meetings, while all downloads remain backend-authorized.
 
+#### Feature 12 motion creation and voting windows
+
+- Voting owns motions, ordered options, and eligible-membership snapshots
+  (migration V10). All repository queries obtain `TenantContext` and include
+  an explicit club predicate. Members supplies the active-member audience
+  through its public application service; Voting never imports its repositories.
+- `GET /api/v1/motions` requires `VOTES_READ`; `POST /api/v1/motions`,
+  `PUT /api/v1/motions/{id}`, and `POST /api/v1/motions/{id}/cancel` require
+  `VOTES_CREATE`. Services repeat these checks. Writes acquire Identity's club
+  lock and re-check current permission before taking a membership snapshot.
+- Creation requires a future opening, a later closing, two to twenty distinct
+  option labels, and a nonempty active-member voter set. Explicit foreign or
+  inactive memberships are rejected. All-active selection snapshots the current
+  audience rather than automatically admitting later joiners.
+- State is calculated from one clock instant per read: before opening is
+  `DRAFT`, opening inclusive through closing exclusive is `OPEN`, and after
+  closing is `CLOSED`. Explicit cancellation takes precedence. The frontend
+  polls every 15 seconds while active; no scheduler is needed for enforcement.
+- Only drafts and explicitly cancelled motions can be edited. Cancelled
+  corrections preserve cancellation and may retain past window dates; there
+  is no reopen operation. Edit and cancellation requests carry the current JPA
+  version, with stale requests rejected as HTTP 409.
+- The MapStruct response includes ordered options, audience count, and the
+  caller's snapshot eligibility combined with current `VOTES_CAST` permission.
+  Eligibility alone does not mean the window is open. Only `VOTES_CREATE`
+  callers receive voter IDs for editing. Inactive callers are denied by the
+  tenant membership boundary even when they remain in a historical snapshot.
+- Options use a set with explicit positions to avoid duplicate collection
+  entries when fetching both options and voters. Edits retain unchanged voter
+  rows, avoiding unique-constraint conflicts during ORM insert/delete ordering.
+- Vote casting, immutable tallies/results, and publication remain Feature 13.
+
 #### General authorization rules
 
 - Fixed, platform-defined **permission set** (e.g. `MEMBERS_READ`, `MEMBERS_WRITE`, `CONTRIBUTIONS_READ`, `CONTRIBUTIONS_WRITE`, `VOTES_CREATE`, `VOTES_CAST`, `DOCUMENTS_MANAGE`, `AUDIT_READ`, etc.)

@@ -100,6 +100,11 @@ public class MemberService {
         return contributionMembers().stream().filter(ContributionMember::active)
                 .map(member -> new MeetingAudienceMember(member.membershipId(), member.email(), member.displayName())).toList();
     }
+    /** Public Members-module boundary for Voting eligibility snapshots. */
+    public List<VotingEligibleMember> activeVotingMembers() {
+        return contributionMembers().stream().filter(ContributionMember::active)
+                .map(member -> new VotingEligibleMember(member.membershipId(),member.displayName(),member.email())).toList();
+    }
 
     /** Serializes financial assignment snapshots with membership lifecycle changes. */
     public List<ContributionMember> lockAndSnapshotActiveContributionMembers() {
