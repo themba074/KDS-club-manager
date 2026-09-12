@@ -27,6 +27,13 @@ services:
       DEVELOPMENT_INVITATION_DELIVERY: ${DEVELOPMENT_INVITATION_DELIVERY:-true}
       FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:5175,http://127.0.0.1:5175}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5175}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-kds-private}
+      KDS_STORAGE_ROOT: ${KDS_STORAGE_ROOT:-/var/lib/kds-storage}
+    volumes:
+      - storage_data:${KDS_STORAGE_ROOT:-/var/lib/kds-storage}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -44,3 +51,4 @@ services:
 
 volumes:
   postgres_data:
+  storage_data:

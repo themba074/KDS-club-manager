@@ -214,7 +214,7 @@ overwriting newer changes.
 Migration V10 adds the tenant-scoped motion, option, and eligible-membership
 tables. Flyway applies it automatically; no database reset is needed.
 
-## Vote casting and published results (Feature 13, pending review)
+## Vote casting and published results (Feature 13)
 
 Eligible active members with `VOTES_CAST` can submit one final choice while a
 motion is open. The database and service layer reject repeat submissions,
@@ -233,6 +233,25 @@ Ordinary members with `VOTES_READ` see results only after publication.
 Migration V11 adds tenant-scoped ballots and published result snapshots. Its
 composite foreign keys prevent cross-club motion, option, or membership links,
 and Flyway upgrades an existing V10 database without a reset.
+
+## Document library (Feature 14, pending review)
+
+Open **Documents** after selecting a club. Administrators and Secretaries,
+through `DOCUMENTS_MANAGE`, can upload files up to 5 MB, assign a title and
+category, choose which Investment Club roles may see each document, edit that
+metadata, and append replacement versions. Earlier versions remain available
+and immutable. Members with `DOCUMENTS_READ` receive only documents allowed for
+their current role; direct download requests repeat the tenant and role checks.
+
+Local development stores files below `KDS_STORAGE_ROOT`. Production can use a
+private Supabase Storage bucket by setting `STORAGE_PROVIDER=supabase`,
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET`.
+The backend uploads with overwrite disabled and issues five-minute signed URLs
+after authorization. Storage keys follow
+`documents/{clubId}/{documentId}/{versionId}.{extension}`. Migration V12 adds
+the tenant-scoped document, visibility-role, and immutable version tables.
+Docker Compose mounts the local storage path on the `storage_data` volume so
+development uploads survive backend container replacement.
 
 ## Run checks without Docker
 

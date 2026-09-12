@@ -15,7 +15,9 @@ RUN apt-get update \
     && apt-get install --yes --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system spring \
-    && useradd --system --gid spring --create-home spring
+    && useradd --system --gid spring --create-home spring \
+    && mkdir --parents /var/lib/kds-storage \
+    && chown spring:spring /var/lib/kds-storage
 
 WORKDIR /app
 COPY --from=build /workspace/target/backend-*.jar app.jar
