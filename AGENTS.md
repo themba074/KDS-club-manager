@@ -65,7 +65,7 @@ either of you can pick up the other's feature if it makes sense.
 - Features #0–#12 are merged on `main`.
 
 ## Current Build Status
-- Phase: Voting — Feature 13 reviewed, pending merge
+- Phase: Documents — Feature 14 implemented, pending review
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -119,11 +119,14 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #12 — motion creation, window-derived state,
   eligible-member snapshots, draft/cancelled edits, explicit cancellation,
   optimistic versions, and Voting UI.
-- Implemented and reviewed on `feature/vote-casting-results`, pending merge: #13 —
+- Landed on `main`: #13 —
   one-time eligible-member ballots, private pre-publication tallies, immutable
   published result snapshots, simple-majority outcomes, and Voting UI flows.
   Completion and verification notes are in `docs/NEW_ACCOUNT_HANDOVER.md`.
-- Next after #13 review/merge: #14 — document upload, storage, and role-based access.
+- Implemented on `feature/document-library`, pending review: #14 — tenant-scoped
+  document upload and listing, role-based visibility, immutable version history,
+  authorized downloads, local storage, and a Supabase private-bucket adapter.
+- Next after #14 review/merge: #15 — notification service and trigger wiring.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

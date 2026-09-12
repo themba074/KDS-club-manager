@@ -96,7 +96,7 @@ while starting workers. `--maxWorkers=1` is the reliable local command.
 
 ## What has landed
 
-Features 0 through 11 are merged on `main`:
+Features 0 through 13 are merged on `main`:
 
 | Feature | Delivered capability |
 | --- | --- |
@@ -105,54 +105,55 @@ Features 0 through 11 are merged on `main`:
 | 7–9 | Contribution schedules, payment/ledger tracking, and reports/exports |
 | 10–11 | Meeting scheduling/agendas, RSVP, draft/published minutes, and secured minute attachments |
 | 12 | Motion creation, voter snapshots, voting windows, and cancellation |
+| 13 | One-time ballots, private tallies, and immutable published results |
 
 For detailed usage notes, read the feature sections in `README.md`.
 
-## Current work: Feature 13
+## Current work: Feature 14
 
-Feature 12 is merged on `main`. Feature 13, vote casting, tally, lock, and
-publish, is implemented locally on:
+Features 0 through 13 are merged on `main`. Feature 14, document upload,
+storage, versioning, and role-based access, is implemented locally on:
 
 ```text
-feature/vote-casting-results
+feature/document-library
 ```
 
-The branch contains the completed implementation and has not been merged. It adds
-append-only, tenant-scoped ballots; one-vote-per-motion enforcement; private
-manager tallies after closing; simple-majority outcomes; and immutable
-published result snapshots. There is intentionally no override or unpublish
-path. Once results are published, the motion cannot be cancelled.
+The branch adds tenant-scoped upload/list/download endpoints, role allowlists
+validated through ClubTypeConfig, optimistic metadata updates, and append-only
+file versions. `DOCUMENTS_MANAGE` callers see and manage the full club library;
+ordinary `DOCUMENTS_READ` callers receive only documents allowed for their
+current role. Direct downloads repeat the tenant and visibility checks.
 
-Voting writes lock the club and motion before rechecking current permissions,
-membership status, the eligible-member snapshot, the voting window, and option
-ownership. A database unique constraint is the final duplicate-vote guard,
-including concurrent submissions. Composite tenant foreign keys prevent mixed
-club motion, option, membership, ballot, and result relationships.
+The shared `FileStorageService` remains compatible with contribution proofs and
+meeting attachments. Local filesystem storage is the default. The Supabase
+adapter uses a private bucket, uploads with overwrite disabled, and returns a
+five-minute signed URL after authorization. Exact document keys use
+`documents/{clubId}/{documentId}/{versionId}.{extension}`. No Supabase
+credentials are present in this environment, so the adapter is covered by an
+HTTP contract test rather than a live bucket test.
+Docker Compose persists local files on its `storage_data` volume.
 
-The Voting page now offers a one-time radio ballot to eligible members, keeps a
-failed selection available for retry, replaces a successful ballot with a
-receipt, gives managers a closed-result preview and publish action, and hides
-unpublished results from ordinary members. The motions response returns only
-the caller's own selected option; tally responses contain counts without voter
-identities.
+The Documents page uses TanStack Query for all server state. Managers can
+upload, edit metadata/access, and add versions; every visible version can be
+downloaded. Both browser and backend enforce the 5 MB limit, while the backend
+also allowlists supported PDF, Office, CSV, text, PNG, and JPEG types.
 
 Verification on 2026-09-12:
 
-- `backend/`: `./mvnw.cmd test` passed, 114 tests.
-- `frontend/`: lint passed; all 54 tests passed; the production build passed.
-- Voting coverage includes window and eligibility checks, invalid and foreign
-  options, inactive members, duplicate and concurrent vote attempts, result
-  privacy, simple-majority/no-majority tallies, stale publication, immutable
-  post-publication behavior, all three endpoints' tenant isolation, and the
-  corresponding browser flows.
-- Docker Compose rebuilt the backend against the existing PostgreSQL 16
-  database. Flyway upgraded it from V10 to V11 successfully, the backend became
-  healthy, and `flyway_schema_history` recorded V11 as successful.
+- `backend/`: `./mvnw.cmd test` passed, 136 tests. Coverage includes service
+  validation and permission rechecks, tenant/role filtering, direct-download
+  denial, immutable version downloads, optimistic conflicts, and the Supabase
+  upload/signed-URL contract.
+- `frontend/`: lint passed; all 57 tests passed; the production build passed.
+- Docker Compose started the existing Feature 13 backend against its persisted
+  PostgreSQL 16 volume at V11, then rebuilt Feature 14. Flyway upgraded the
+  same volume to V12 successfully; all three document tables exist and the
+  backend is healthy. An authenticated PostgreSQL smoke flow uploaded a local
+  file and updated its metadata through the pessimistic row lock successfully;
+  the generated account, club, database rows, and file were removed afterward.
 
-Developer review is complete. The branch is ready for remote review; open or
-merge a pull request only when explicitly requested. Do not mark Feature 13 as
-merged in `AGENTS.md` yet. PostgreSQL and the backend are currently running
-under Docker Compose; the frontend container was not rebuilt in this pass.
+Feature 14 is pending developer review. Do not commit, push, or merge until the
+developers explicitly request it.
 
 ## How to continue safely
 
@@ -190,14 +191,13 @@ under Docker Compose; the frontend container was not rebuilt in this pass.
 - Treat browser permission checks as usability improvements only. The backend
   must always enforce permission and tenant scope.
 
-## Roadmap after Feature 13
+## Roadmap after Feature 14
 
 The planned sequence is:
 
-1. Feature 14: documents, Supabase storage adapter, and access rules.
-2. Feature 15: in-app/email notifications and existing trigger wiring.
-3. Feature 16: immutable audit logging and viewer.
-4. Features 17–21: club-type configuration, reports, hardening, deployment,
+1. Feature 15: in-app/email notifications and existing trigger wiring.
+2. Feature 16: immutable audit logging and viewer.
+3. Features 17–21: club-type configuration, reports, hardening, deployment,
    and pilot-launch polish.
 
 Use `docs/TEAM_WORKFLOW.md` as the authoritative feature plan. It includes
