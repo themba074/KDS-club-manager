@@ -62,10 +62,10 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#11 are merged on `main`.
+- Features #0–#12 are merged on `main`.
 
 ## Current Build Status
-- Phase: Voting — Feature 12 pending review
+- Phase: Voting — Feature 13 reviewed, pending merge
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -113,14 +113,17 @@ either of you can pick up the other's feature if it makes sense.
   past views, permissions, optimistic edit protection, and a best-effort
   notification event seam with isolation tests.
 - Landed on `main`: #11 —
-  #11 — authenticated-member RSVP responses, manager counts, safe text
+  authenticated-member RSVP responses, manager counts, safe text
   draft/published minutes, tenant-authorized attachments, optimistic edit
   protection, and publication/isolation tests.
-- Implemented locally, pending review on `feature/motion-voting-window`: #12 — motion creation,
-  window-derived state, eligible-member snapshots, draft/cancelled edits,
-  explicit cancellation, optimistic versions, and Voting UI. Completion and
-  verification notes are in `docs/NEW_ACCOUNT_HANDOVER.md`; not merged yet.
-- Next after #12 review/merge: #13 — vote casting, tally, lock, and publish.
+- Landed on `main`: #12 — motion creation, window-derived state,
+  eligible-member snapshots, draft/cancelled edits, explicit cancellation,
+  optimistic versions, and Voting UI.
+- Implemented and reviewed on `feature/vote-casting-results`, pending merge: #13 —
+  one-time eligible-member ballots, private pre-publication tallies, immutable
+  published result snapshots, simple-majority outcomes, and Voting UI flows.
+  Completion and verification notes are in `docs/NEW_ACCOUNT_HANDOVER.md`.
+- Next after #13 review/merge: #14 — document upload, storage, and role-based access.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

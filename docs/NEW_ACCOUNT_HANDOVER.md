@@ -104,60 +104,55 @@ Features 0 through 11 are merged on `main`:
 | 5–6 | Member invitations, directory, lifecycle status changes, and CSV import |
 | 7–9 | Contribution schedules, payment/ledger tracking, and reports/exports |
 | 10–11 | Meeting scheduling/agendas, RSVP, draft/published minutes, and secured minute attachments |
+| 12 | Motion creation, voter snapshots, voting windows, and cancellation |
 
 For detailed usage notes, read the feature sections in `README.md`.
 
-## Current work: Feature 12
+## Current work: Feature 13
 
-Feature 12, motion creation and voting windows, is implemented locally on:
+Feature 12 is merged on `main`. Feature 13, vote casting, tally, lock, and
+publish, is implemented locally on:
 
 ```text
-feature/motion-voting-window
+feature/vote-casting-results
 ```
 
-The branch contains uncommitted work and has not been merged. It now includes
-the motion schema/API, lazy `DRAFT`/`OPEN`/`CLOSED` state calculation, explicit
-cancellation, active-member snapshots, and a Voting UI with creation, editing,
-cancellation feedback, and automatic refresh every 15 seconds.
+The branch contains the completed implementation and has not been merged. It adds
+append-only, tenant-scoped ballots; one-vote-per-motion enforcement; private
+manager tallies after closing; simple-majority outcomes; and immutable
+published result snapshots. There is intentionally no override or unpublish
+path. Once results are published, the motion cannot be cancelled.
 
-Drafts and explicitly cancelled motions can be edited. Cancelled edits never
-reopen the motion. Managers receive voter IDs for editing; regular members see
-only the count and their own eligibility. The editor preserves the voter
-snapshot unless the manager explicitly changes it. Membership and permission
-checks run under Identity's club lock before writes; stale versions fail.
+Voting writes lock the club and motion before rechecking current permissions,
+membership status, the eligible-member snapshot, the voting window, and option
+ownership. A database unique constraint is the final duplicate-vote guard,
+including concurrent submissions. Composite tenant foreign keys prevent mixed
+club motion, option, membership, ballot, and result relationships.
 
-The completion pass fixed two ORM collection issues: replacing every voter row
-could violate its unique constraint, and fetching voters with a list of options
-could duplicate options and corrupt a later edit. Unchanged voter rows are now
-retained; options use a set with explicit ordered positions. Integration tests
-exercise create/edit/reload with multiple voters and changing option counts.
+The Voting page now offers a one-time radio ballot to eligible members, keeps a
+failed selection available for retry, replaces a successful ballot with a
+receipt, gives managers a closed-result preview and publish action, and hides
+unpublished results from ordinary members. The motions response returns only
+the caller's own selected option; tally responses contain counts without voter
+identities.
 
-Verification on 2026-09-11:
+Verification on 2026-09-12:
 
-- `backend/`: `./mvnw.cmd -B -ntp verify` passed, 97 tests.
-- `frontend/`: lint passed; the full single-worker suite passed, 49 tests;
-  production build passed. The 12 voting tests and build passed again after
-  the final form event-handler adjustment.
-- Voting coverage includes exact window boundaries, cancellation corrections,
-  invalid/foreign/inactive voters, snapshot stability, stale edits, cross-tenant
-  reads/writes, permissions, frontend forms, polling, and club switching.
-- Docker Compose built and started PostgreSQL, backend, and frontend. The
-  PostgreSQL smoke test passed create/edit/reload, stale-edit rejection,
-  cancellation/correction without reopening, and cross-club list/edit/cancel/
-  voter-assignment isolation. Backend health and frontend HTTP checks passed.
-  The test created a separate local test account and two smoke-test clubs;
-  existing credentials and database data were preserved.
-- The frontend Docker health probe now uses `127.0.0.1` to match Nginx's IPv4
-  listener. The previous `localhost` probe failed inside the Alpine container
-  even while the published frontend URL returned HTTP 200.
+- `backend/`: `./mvnw.cmd test` passed, 114 tests.
+- `frontend/`: lint passed; all 54 tests passed; the production build passed.
+- Voting coverage includes window and eligibility checks, invalid and foreign
+  options, inactive members, duplicate and concurrent vote attempts, result
+  privacy, simple-majority/no-majority tallies, stale publication, immutable
+  post-publication behavior, all three endpoints' tenant isolation, and the
+  corresponding browser flows.
+- Docker Compose rebuilt the backend against the existing PostgreSQL 16
+  database. Flyway upgraded it from V10 to V11 successfully, the backend became
+  healthy, and `flyway_schema_history` recorded V11 as successful.
 
-Remaining handoff: developer review of the final diff, then commit/push/open
-the review only when explicitly requested. Do not mark Feature 12 as merged
-in `AGENTS.md` yet. The local app is available at http://localhost:5175.
-
-Do not start Feature 13 from `main` until Feature 12 has been reviewed and
-merged. Feature 13 adds actual vote casting, duplicate-vote prevention,
-tallies, locking, and published results.
+Developer review is complete. The branch is ready for remote review; open or
+merge a pull request only when explicitly requested. Do not mark Feature 13 as
+merged in `AGENTS.md` yet. PostgreSQL and the backend are currently running
+under Docker Compose; the frontend container was not rebuilt in this pass.
 
 ## How to continue safely
 
@@ -195,15 +190,14 @@ tallies, locking, and published results.
 - Treat browser permission checks as usability improvements only. The backend
   must always enforce permission and tenant scope.
 
-## Roadmap after Feature 12
+## Roadmap after Feature 13
 
 The planned sequence is:
 
-1. Feature 13: vote casting, tally, lock, and publish.
-2. Feature 14: documents, Supabase storage adapter, and access rules.
-3. Feature 15: in-app/email notifications and existing trigger wiring.
-4. Feature 16: immutable audit logging and viewer.
-5. Features 17–21: club-type configuration, reports, hardening, deployment,
+1. Feature 14: documents, Supabase storage adapter, and access rules.
+2. Feature 15: in-app/email notifications and existing trigger wiring.
+3. Feature 16: immutable audit logging and viewer.
+4. Features 17–21: club-type configuration, reports, hardening, deployment,
    and pilot-launch polish.
 
 Use `docs/TEAM_WORKFLOW.md` as the authoritative feature plan. It includes

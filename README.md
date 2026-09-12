@@ -192,7 +192,7 @@ publication. Attachment downloads pass through the backend permission and
 tenant checks rather than exposing storage paths. Flyway migration V9 creates
 the RSVP and minutes tables.
 
-## Motion creation and voting windows (Feature 12, pending review)
+## Motion creation and voting windows (Feature 12)
 
 Open **Voting** after selecting a club. Members with `VOTES_CREATE`
 (Administrators and Chairpersons by default) can create a motion with a title,
@@ -212,9 +212,27 @@ cannot reopen. Stale edits and cancellations return a conflict rather than
 overwriting newer changes.
 
 Migration V10 adds the tenant-scoped motion, option, and eligible-membership
-tables. Flyway applies it automatically; no database reset is needed. Actual
-vote casting, duplicate-vote prevention, tallies, and publication belong to
-Feature 13 and are not available yet.
+tables. Flyway applies it automatically; no database reset is needed.
+
+## Vote casting and published results (Feature 13, pending review)
+
+Eligible active members with `VOTES_CAST` can submit one final choice while a
+motion is open. The database and service layer reject repeat submissions,
+including concurrent attempts, instead of replacing the earlier ballot. A
+member can see their own recorded choice on the motion; result responses never
+expose individual ballot identities.
+
+After the window closes, members with `VOTES_CREATE` can preview the tally and
+publish it. An option wins only when it receives more than half of all votes
+cast; ties and plurality-only outcomes are recorded as `NO_MAJORITY`.
+Publication stores an immutable result snapshot with ordered option counts.
+There is no unpublish or administrator override flow, and published motions
+cannot be cancelled. Cancelled motions with recorded ballots cannot be edited.
+Ordinary members with `VOTES_READ` see results only after publication.
+
+Migration V11 adds tenant-scoped ballots and published result snapshots. Its
+composite foreign keys prevent cross-club motion, option, or membership links,
+and Flyway upgrades an existing V10 database without a reset.
 
 ## Run checks without Docker
 

@@ -3,6 +3,7 @@ package com.kds.backend.voting.repository;
 import com.kds.backend.identity.application.TenantContext;
 import com.kds.backend.voting.domain.MotionEntity;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -27,6 +28,14 @@ public class MotionRepository {
                 """, MotionEntity.class)
                 .setParameter("clubId", TenantContext.requireClubId()).setParameter("id", id)
                 .getResultList().stream().findFirst();
+    }
+
+    public Optional<MotionEntity> lock(UUID id) {
+        return entityManager.createQuery("""
+                select motion from MotionEntity motion where motion.clubId = :clubId and motion.id = :id
+                """, MotionEntity.class)
+                .setParameter("clubId", TenantContext.requireClubId()).setParameter("id", id)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList().stream().findFirst();
     }
 
     public List<MotionEntity> all() {

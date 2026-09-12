@@ -23,6 +23,11 @@ public class MotionEntity {
     @Column(name = "created_by", nullable = false) private UUID createdBy;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
+    @Column(name = "results_published_at") private Instant resultsPublishedAt;
+    @Column(name = "results_published_by") private UUID resultsPublishedBy;
+    @Column(name = "result_outcome", length = 30) private String resultOutcome;
+    @Column(name = "winning_option_id") private UUID winningOptionId;
+    @Column(name = "total_votes") private Integer totalVotes;
     @Version private long version;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -64,6 +69,20 @@ public class MotionEntity {
     }
 
     public void cancel(UUID actor, Instant now) { cancelledBy = actor; cancelledAt = now; updatedAt = now; }
+    public void publishResults(UUID actor, Instant now, String outcome, UUID winner, int votes) {
+        if (resultsPublishedAt != null) throw new IllegalStateException("Results are already published.");
+        resultsPublishedBy = actor;
+        resultsPublishedAt = now;
+        resultOutcome = outcome;
+        winningOptionId = winner;
+        totalVotes = votes;
+        updatedAt = now;
+    }
+    public MotionState stateAt(Instant instant) {
+        if (cancelledAt != null) return MotionState.CANCELLED;
+        if (instant.isBefore(opensAt)) return MotionState.DRAFT;
+        return instant.isBefore(closesAt) ? MotionState.OPEN : MotionState.CLOSED;
+    }
     public UUID getId() { return id; }
     public UUID getClubId() { return clubId; }
     public String getTitle() { return title; }
@@ -71,6 +90,10 @@ public class MotionEntity {
     public Instant getOpensAt() { return opensAt; }
     public Instant getClosesAt() { return closesAt; }
     public Instant getCancelledAt() { return cancelledAt; }
+    public Instant getResultsPublishedAt() { return resultsPublishedAt; }
+    public String getResultOutcome() { return resultOutcome; }
+    public UUID getWinningOptionId() { return winningOptionId; }
+    public Integer getTotalVotes() { return totalVotes; }
     public long getVersion() { return version; }
     public List<MotionOptionEntity> getOptions() {
         return options.stream().sorted(Comparator.comparingInt(MotionOptionEntity::getPosition)).toList();

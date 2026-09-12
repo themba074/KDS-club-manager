@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { VotingPage } from "./index";
-import type { Motion } from "./motion-hooks";
+import type { Motion, MotionResult } from "./motion-hooks";
 
 const { get, post, put } = vi.hoisted(() => ({
   get: vi.fn(),
@@ -22,6 +22,7 @@ vi.mock("@/features/auth/auth-api", () => ({
   errorMessage: () => "Motion request failed",
 }));
 let motions: Motion[];
+let results: MotionResult;
 let client: QueryClient;
 const member = {
   id: "member-1",
@@ -46,6 +47,8 @@ function draft(): Motion {
     eligibleVoterCount: 1,
     eligibleToVote: true,
     eligibleMembershipIds: [member.id],
+    selectedOptionId: null,
+    resultsPublished: false,
   };
 }
 beforeEach(() => {
@@ -62,16 +65,53 @@ beforeEach(() => {
     },
   );
   motions = [draft()];
-  get.mockImplementation((path: string) =>
-    Promise.resolve({ data: path === "/motions" ? motions : [member] }),
-  );
-  post.mockImplementation((path: string) => {
+  results = {
+    motionId: "motion-1",
+    published: false,
+    publishedAt: null,
+    totalVotes: 1,
+    eligibleVoterCount: 3,
+    outcome: "NO_MAJORITY",
+    winningOptionId: null,
+    options: [
+      { optionId: "option-1", position: 0, label: "Yes", voteCount: 1 },
+      { optionId: "option-2", position: 1, label: "No", voteCount: 0 },
+    ],
+  };
+  get.mockImplementation((path: string) => {
+    if (path === "/motions") return Promise.resolve({ data: motions });
+    if (path === "/members") return Promise.resolve({ data: [member] });
+    return Promise.resolve({ data: results });
+  });
+  post.mockImplementation((path: string, body: { optionId?: string }) => {
     if (path.endsWith("/cancel"))
       motions = motions.map((motion) => ({
         ...motion,
         state: "CANCELLED",
         version: motion.version + 1,
       }));
+    if (path.endsWith("/votes")) {
+      return Promise.resolve({
+        data: {
+          motionId: "motion-1",
+          optionId: body.optionId,
+          castAt: new Date().toISOString(),
+        },
+      });
+    }
+    if (path.endsWith("/results/publish")) {
+      results = {
+        ...results,
+        published: true,
+        publishedAt: new Date().toISOString(),
+      };
+      motions = motions.map((motion) => ({
+        ...motion,
+        resultsPublished: true,
+        version: motion.version + 1,
+      }));
+      return Promise.resolve({ data: results });
+    }
     return Promise.resolve({ data: motions[0] });
   });
   put.mockResolvedValue({ data: { ...draft(), version: 4 } });
@@ -132,6 +172,116 @@ it("shows motions to read-only members and never offers voting to an ineligible 
     screen.queryByRole("button", { name: "Cancel motion" }),
   ).not.toBeInTheDocument();
   expect(get).not.toHaveBeenCalledWith("/members", expect.anything());
+});
+
+it("requires a choice, casts one ballot, and replaces the ballot with a receipt", async () => {
+  motions = [{ ...draft(), state: "OPEN" }];
+  page();
+  await screen.findByText("Approve budget");
+  fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Choose an option before casting your vote.",
+  );
+  expect(post).not.toHaveBeenCalledWith(
+    "/motions/motion-1/votes",
+    expect.anything(),
+  );
+
+  fireEvent.click(screen.getByLabelText("Yes"));
+  fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith("/motions/motion-1/votes", {
+      optionId: "option-1",
+    }),
+  );
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Vote recorded for Yes. Votes cannot be changed.",
+  );
+  expect(
+    screen.queryByRole("button", { name: "Cast vote" }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps the ballot selected when vote submission fails", async () => {
+  motions = [{ ...draft(), state: "OPEN" }];
+  post.mockRejectedValueOnce(new Error("offline"));
+  page();
+  await screen.findByText("Approve budget");
+  fireEvent.click(screen.getByLabelText("No"));
+  fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Motion request failed",
+  );
+  expect(screen.getByLabelText("No")).toBeChecked();
+});
+
+it("lets a manager review a closed tally and publish its immutable snapshot", async () => {
+  motions = [{ ...draft(), state: "CLOSED" }];
+  page();
+  expect(await screen.findByText("Result preview")).toBeInTheDocument();
+  expect(
+    screen.getByText("1 of 3 eligible members voted."),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("No option received a simple majority."),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Publish results" }));
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith("/motions/motion-1/results/publish", {
+      version: 3,
+    }),
+  );
+  expect(await screen.findByText("Published results")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Publish results" }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps an unpublished tally private from ordinary members", async () => {
+  motions = [{ ...draft(), state: "CLOSED", eligibleToVote: false }];
+  useAuthStore.setState((state) => ({
+    activeClub: {
+      ...state.activeClub!,
+      administrator: false,
+      permissions: ["VOTES_READ"],
+    },
+  }));
+  page();
+  expect(
+    await screen.findByText("Results will be available after publication."),
+  ).toBeInTheDocument();
+  expect(get).not.toHaveBeenCalledWith(
+    "/motions/motion-1/results",
+    expect.anything(),
+  );
+});
+
+it("shows a published result and its winner to ordinary members", async () => {
+  motions = [
+    {
+      ...draft(),
+      state: "CLOSED",
+      eligibleToVote: false,
+      resultsPublished: true,
+    },
+  ];
+  results = {
+    ...results,
+    published: true,
+    publishedAt: "2026-09-12T10:00:00Z",
+    outcome: "WINNER",
+    winningOptionId: "option-1",
+  };
+  useAuthStore.setState((state) => ({
+    activeClub: {
+      ...state.activeClub!,
+      administrator: false,
+      permissions: ["VOTES_READ"],
+    },
+  }));
+  page();
+  expect(await screen.findByText("Published results")).toBeInTheDocument();
+  expect(screen.getByText("Winner: Yes")).toBeInTheDocument();
 });
 
 it("creates a motion with ordered options, refreshes the list, and clears the form", async () => {
