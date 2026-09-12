@@ -4,7 +4,9 @@ import com.kds.backend.identity.application.*;
 import com.kds.backend.members.application.MemberService;
 import com.kds.backend.members.application.VotingEligibleMember;
 import com.kds.backend.voting.domain.MotionEntity;
+import com.kds.backend.voting.domain.MotionState;
 import com.kds.backend.voting.repository.MotionRepository;
+import com.kds.backend.voting.repository.VoteRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,6 +20,7 @@ class MotionServiceTests {
     private final ClubService clubs = mock(ClubService.class);
     private final MembershipLifecycleService memberships = mock(MembershipLifecycleService.class);
     private final MemberService members = mock(MemberService.class);
+    private final VoteRepository votes = mock(VoteRepository.class);
     private final UUID club = UUID.randomUUID(), actor = UUID.randomUUID(), member = UUID.randomUUID(), id = UUID.randomUUID();
     private final Instant now = Instant.parse("2026-09-05T10:00:00Z");
     private final Clock clock = Clock.fixed(now, ZoneOffset.UTC);
@@ -25,7 +28,8 @@ class MotionServiceTests {
 
     @BeforeEach void setup() {
         TenantContext.set(club);
-        service = new MotionService(motions, clubs, memberships, members, clock, new MotionMapperImpl());
+        service = new MotionService(motions, clubs, memberships, members, clock, new MotionMapperImpl(), votes);
+        when(votes.selections(any())).thenReturn(Map.of());
         when(clubs.requireMembership(actor, club)).thenReturn(new ClubSummary(club, "Club", "INVESTMENT_CLUB", true,
                 List.of("VOTES_READ", "VOTES_CREATE", "VOTES_CAST")));
         when(memberships.requireCurrentMembership(actor)).thenReturn(new MembershipLifecycleMember(member, actor, "ADMINISTRATOR", "ACTIVE"));
@@ -36,18 +40,18 @@ class MotionServiceTests {
     @Test void stateTransitionsIncludeExactOpeningAndClosingBoundaries() {
         MotionEntity motion = motion(now.plusSeconds(60), now.plusSeconds(120));
         when(motions.all()).thenReturn(List.of(motion));
-        assertEquals(MotionView.State.DRAFT, service.all(actor).getFirst().state());
-        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(60), ZoneOffset.UTC), new MotionMapperImpl());
-        assertEquals(MotionView.State.OPEN, service.all(actor).getFirst().state());
-        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(120), ZoneOffset.UTC), new MotionMapperImpl());
-        assertEquals(MotionView.State.CLOSED, service.all(actor).getFirst().state());
+        assertEquals(MotionState.DRAFT, service.all(actor).getFirst().state());
+        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(60), ZoneOffset.UTC), new MotionMapperImpl(), votes);
+        assertEquals(MotionState.OPEN, service.all(actor).getFirst().state());
+        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(120), ZoneOffset.UTC), new MotionMapperImpl(), votes);
+        assertEquals(MotionState.CLOSED, service.all(actor).getFirst().state());
         motion.cancel(actor, now);
-        assertEquals(MotionView.State.CANCELLED, service.all(actor).getFirst().state());
+        assertEquals(MotionState.CANCELLED, service.all(actor).getFirst().state());
     }
 
     @Test void openAndClosedMotionsCannotBeEdited() {
         for (Instant closesAt : List.of(now.plusSeconds(60), now)) {
-            when(motions.find(id)).thenReturn(Optional.of(motion(now.minusSeconds(60), closesAt)));
+            when(motions.lock(id)).thenReturn(Optional.of(motion(now.minusSeconds(60), closesAt)));
             assertStatus(409, () -> service.edit(actor, id, command(List.of("Yes", "No"), Set.of(member), false)));
         }
         verify(motions, never()).flush();
@@ -56,11 +60,24 @@ class MotionServiceTests {
     @Test void cancelledMotionCanBeEditedWithoutReopening() {
         MotionEntity motion = motion(now.minusSeconds(120), now.minusSeconds(60));
         motion.cancel(actor, now);
-        when(motions.find(id)).thenReturn(Optional.of(motion));
+        when(motions.lock(id)).thenReturn(Optional.of(motion));
         MotionCommand command = new MotionCommand(0, "Corrected", null, now.minusSeconds(120).atOffset(ZoneOffset.UTC),
                 now.minusSeconds(60).atOffset(ZoneOffset.UTC), List.of("Yes", "No"), Set.of(member), false);
-        assertEquals(MotionView.State.CANCELLED, service.edit(actor, id, command).state());
+        assertEquals(MotionState.CANCELLED, service.edit(actor, id, command).state());
         assertEquals("Corrected", motion.getTitle());
+    }
+
+    @Test void cancelledMotionWithRecordedVotesCannotBeEdited() {
+        MotionEntity motion = motion(now.minusSeconds(120), now.minusSeconds(60));
+        motion.cancel(actor, now);
+        when(motions.lock(id)).thenReturn(Optional.of(motion));
+        when(votes.hasVotes(id)).thenReturn(true);
+        MotionCommand command = new MotionCommand(0, "Corrected", null,
+                now.minusSeconds(120).atOffset(ZoneOffset.UTC), now.minusSeconds(60).atOffset(ZoneOffset.UTC),
+                List.of("Yes", "No"), Set.of(member), false);
+
+        assertStatus(409, () -> service.edit(actor, id, command));
+        verify(motions, never()).flush();
     }
 
     @Test void createSnapshotsActiveMembersAndChecksPermissionUnderLock() {
@@ -103,7 +120,7 @@ class MotionServiceTests {
     }
 
     @Test void staleEditsAndCancellationsAreRejected() {
-        when(motions.find(id)).thenReturn(Optional.of(motion(now.plusSeconds(60), now.plusSeconds(120))));
+        when(motions.lock(id)).thenReturn(Optional.of(motion(now.plusSeconds(60), now.plusSeconds(120))));
         MotionCommand stale = new MotionCommand(5, "Changed", null, now.plusSeconds(60).atOffset(ZoneOffset.UTC),
                 now.plusSeconds(120).atOffset(ZoneOffset.UTC), List.of("Yes", "No"), Set.of(member), false);
         assertStatus(409, () -> service.edit(actor, id, stale));
@@ -112,8 +129,8 @@ class MotionServiceTests {
     }
 
     @Test void cancellationIsExplicitAndCannotBeRepeated() {
-        when(motions.find(id)).thenReturn(Optional.of(motion(now, now.plusSeconds(120))));
-        assertEquals(MotionView.State.CANCELLED, service.cancel(actor, id, 0).state());
+        when(motions.lock(id)).thenReturn(Optional.of(motion(now, now.plusSeconds(120))));
+        assertEquals(MotionState.CANCELLED, service.cancel(actor, id, 0).state());
         assertStatus(409, () -> service.cancel(actor, id, 0));
     }
 

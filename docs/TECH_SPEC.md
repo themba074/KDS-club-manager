@@ -317,7 +317,30 @@ as unavailable rather than revealing another tenant's records.
 - Options use a set with explicit positions to avoid duplicate collection
   entries when fetching both options and voters. Edits retain unchanged voter
   rows, avoiding unique-constraint conflicts during ORM insert/delete ordering.
-- Vote casting, immutable tallies/results, and publication remain Feature 13.
+
+#### Feature 13 vote casting and published results
+
+- `POST /api/v1/motions/{id}/votes` requires `VOTES_CAST`, an active current
+  membership in the tenant, inclusion in the motion's voter snapshot, an
+  option owned by that motion, and an `OPEN` window. Votes are append-only;
+  the tenant-scoped unique constraint on motion and membership rejects a
+  duplicate even when requests race.
+- `GET /api/v1/motions/{id}/results` requires `VOTES_READ`. While results are
+  unpublished, only `VOTES_CREATE` callers may inspect a tally and only after
+  the window closes. Published results are visible to members with
+  `VOTES_READ`. Ballot identities are never returned by result endpoints.
+- `POST /api/v1/motions/{id}/results/publish` requires `VOTES_CREATE`, a closed
+  motion, and its current optimistic version. Simple majority means more than
+  half of votes cast; otherwise the outcome is `NO_MAJORITY`.
+- Publication stores ordered per-option counts plus the outcome, winner, total,
+  actor, and timestamp as an immutable snapshot. Later reads use the snapshot,
+  and there is no unpublish or administrative override path. Published motions
+  cannot be cancelled. A cancelled motion with recorded ballots cannot be
+  edited, so an option's meaning cannot change after a vote is stored.
+- Voting repositories include explicit tenant predicates. Composite foreign
+  keys in migration V11 also prevent a vote or result row from combining a
+  motion, option, or membership from different clubs. Structured log events
+  provide the local audit seam until Feature 16 supplies the audit module.
 
 #### General authorization rules
 

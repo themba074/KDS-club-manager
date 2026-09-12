@@ -5,14 +5,18 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { errorMessage } from "@/features/auth/auth-api";
 import { Button } from "@/components/ui/button";
 import { CreateMotion } from "./CreateMotion";
+import { CastVote } from "./CastVote";
+import { MotionResults } from "./MotionResults";
 import { useCancelMotion, useMotions, type Motion } from "./motion-hooks";
 
 function MotionCard({
   motion,
   canCreate,
+  canCast,
 }: {
   motion: Motion;
   canCreate: boolean;
+  canCast: boolean;
 }) {
   const cancel = useCancelMotion();
   const [editing, setEditing] = useState<Motion | null>(null);
@@ -45,6 +49,12 @@ function MotionCard({
       </p>
       {motion.state === "OPEN" && !motion.eligibleToVote && (
         <p>You are not eligible to vote on this motion.</p>
+      )}
+      {motion.state === "OPEN" && motion.eligibleToVote && canCast && (
+        <CastVote motion={motion} />
+      )}
+      {motion.state === "CLOSED" && (
+        <MotionResults motion={motion} canPublish={canCreate} />
       )}
       {canCreate && (
         <div className="flex flex-wrap gap-2">
@@ -84,6 +94,7 @@ function MotionCard({
 
 export function VotingPage() {
   const canCreate = usePermission("VOTES_CREATE");
+  const canCast = usePermission("VOTES_CAST");
   const clubId = useAuthStore((state) => state.activeClub?.id);
   const motions = useMotions();
   return (
@@ -92,8 +103,7 @@ export function VotingPage() {
         <Vote className="mb-2" />
         <h1 className="text-3xl font-bold">Voting</h1>
         <p className="text-muted-foreground">
-          Create motions and manage voting windows. Vote casting and results are
-          coming in the next feature.
+          Create motions, cast one-time ballots, and publish final results.
         </p>
       </div>
       {canCreate && <CreateMotion key={clubId} />}
@@ -118,6 +128,7 @@ export function VotingPage() {
             key={`${clubId}:${motion.id}`}
             motion={motion}
             canCreate={canCreate}
+            canCast={canCast}
           />
         ))}
       </section>
