@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/features/auth/auth-store"
 import { api } from "@/features/auth/auth-api"
+import { useUnreadNotifications } from "@/features/notifications/notification-hooks"
 
 const navigationSections = ["Club", "Governance"] as const
 
@@ -103,6 +104,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 export function AppLayout() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
   const activeClub = useAuthStore((state) => state.activeClub)
+  const unreadNotifications = useUnreadNotifications()
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -150,9 +152,9 @@ export function AppLayout() {
             <p className="truncate text-sm font-medium">{activeClub?.name}</p>
             <NavLink to="/clubs" className="text-xs text-primary underline">Switch or create club</NavLink>
           </div>
-          <Button variant="ghost" size="icon" aria-label="View notifications">
-            <Bell aria-hidden="true" />
-          </Button>
+          <NavLink to="/notifications" className="relative grid size-8 place-items-center rounded-lg hover:bg-muted" aria-label={`${unreadNotifications.data??0} unread notifications`}>
+            <Bell aria-hidden="true" />{Boolean(unreadNotifications.data)&&<span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">{Math.min(unreadNotifications.data??0,99)}</span>}
+          </NavLink>
           <span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground lg:hidden">
             TS
           </span>

@@ -287,6 +287,26 @@ as unavailable rather than revealing another tenant's records.
   Its tenant-aware read boundary lets Feature 14 replace local storage without
   changing Meetings, while all downloads remain backend-authorized.
 
+#### Feature 15 notifications
+
+- Producers publish small public application events through
+  `DomainEventPublisher`. Notification listeners run after the producer
+  transaction commits and catch their own failures, so delivery cannot roll
+  back meetings, minutes, motions, or contribution reminder requests.
+- Migration V13 stores one notification per tenant membership. Feed, unread,
+  and read-update queries require `TenantContext` and explicitly predicate on
+  both `club_id` and the authenticated membership ID.
+- Meeting changes and published minutes are available immediately. Voting
+  creates durable opening and closing-reminder records; draft edits replace
+  undelivered records and cancellation suppresses them. Payment reminders are
+  explicit manager actions against a tenant-validated outstanding expectation.
+- Email delivery uses the same durable records. The scheduled dispatcher
+  obtains club IDs through Identity's public background-work boundary,
+  establishes and clears `TenantContext` for each club, and processes only
+  that tenant's due records. Failed sends are recorded and retried up to three
+  times. The local adapter logs messages; the SMTP adapter is enabled by
+  configuration.
+
 #### Feature 12 motion creation and voting windows
 
 - Voting owns motions, ordered options, and eligible-membership snapshots

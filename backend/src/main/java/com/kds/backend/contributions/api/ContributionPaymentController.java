@@ -30,5 +30,8 @@ public class ContributionPaymentController {
     public MemberLedger ledger(@AuthenticationPrincipal Jwt jwt,
         @RequestParam @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate from,
         @RequestParam @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) LocalDate to){return service.myLedger(actor(jwt),from,to);}
+    @PostMapping("/reminders") @PreAuthorize("hasAuthority('CONTRIBUTIONS_WRITE')")
+    public ContributionExpectationStatus remind(@AuthenticationPrincipal Jwt jwt,@Valid @RequestBody ReminderRequest request){return service.remind(actor(jwt),request.scheduleVersionId(),request.membershipId(),request.dueDate());}
+    public record ReminderRequest(@jakarta.validation.constraints.NotNull UUID scheduleVersionId,@jakarta.validation.constraints.NotNull UUID membershipId,@jakarta.validation.constraints.NotNull LocalDate dueDate){}
     private UUID actor(Jwt jwt){return UUID.fromString(jwt.getSubject());}
 }

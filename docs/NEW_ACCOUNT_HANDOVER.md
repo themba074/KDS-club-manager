@@ -109,50 +109,51 @@ Features 0 through 13 are merged on `main`:
 
 For detailed usage notes, read the feature sections in `README.md`.
 
-## Current work: Feature 14
+## Current work: Feature 15
 
-Features 0 through 13 are merged on `main`. Feature 14, document upload,
-storage, versioning, and role-based access, is implemented locally on:
+Features 0 through 14 are merged on `main`. Feature 15 is implemented locally
+on:
 
 ```text
-feature/document-library
+codex/notification-service
 ```
 
-The branch adds tenant-scoped upload/list/download endpoints, role allowlists
-validated through ClubTypeConfig, optimistic metadata updates, and append-only
-file versions. `DOCUMENTS_MANAGE` callers see and manage the full club library;
-ordinary `DOCUMENTS_READ` callers receive only documents allowed for their
-current role. Direct downloads repeat the tenant and visibility checks.
+The branch adds tenant-scoped in-app notification persistence, feed and unread
+APIs, read controls, email delivery state, and log/SMTP delivery adapters.
+`DomainEventPublisher` keeps source modules independent of delivery. Handlers
+run after the source transaction commits and failures are contained, so meeting
+scheduling, minutes publication, motion changes, and payment reminder requests
+remain successful if notification work fails.
 
-The shared `FileStorageService` remains compatible with contribution proofs and
-meeting attachments. Local filesystem storage is the default. The Supabase
-adapter uses a private bucket, uploads with overwrite disabled, and returns a
-five-minute signed URL after authorization. Exact document keys use
-`documents/{clubId}/{documentId}/{versionId}.{extension}`. No Supabase
-credentials are present in this environment, so the adapter is covered by an
-HTTP contract test rather than a live bucket test.
-Docker Compose persists local files on its `storage_data` volume.
+Meeting scheduling and edits notify active members immediately. Minutes
+publication does the same. Motion creation stores durable notifications for the
+opening instant and one hour before closing; short windows use their midpoint
+for the closing reminder. Draft edits replace undelivered work and cancellation
+suppresses it. Managers trigger payment reminders explicitly from an
+outstanding contribution.
 
-The Documents page uses TanStack Query for all server state. Managers can
-upload, edit metadata/access, and add versions; every visible version can be
-downloaded. Both browser and backend enforce the 5 MB limit, while the backend
-also allowlists supported PDF, Office, CSV, text, PNG, and JPEG types.
+The Notifications page and header badge use TanStack Query, support individual
+and bulk read actions, and link recipients to the relevant feature. The email
+worker establishes `TenantContext` for each club and retries failed delivery up
+to three times. Local development logs email; SMTP is configured through the
+variables documented in `.env.example`.
 
-Verification on 2026-09-12:
+Migration V13 creates the notification table and tenant membership foreign key.
 
-- `backend/`: `./mvnw.cmd test` passed, 136 tests. Coverage includes service
-  validation and permission rechecks, tenant/role filtering, direct-download
-  denial, immutable version downloads, optimistic conflicts, and the Supabase
-  upload/signed-URL contract.
-- `frontend/`: lint passed; all 57 tests passed; the production build passed.
-- Docker Compose started the existing Feature 13 backend against its persisted
-  PostgreSQL 16 volume at V11, then rebuilt Feature 14. Flyway upgraded the
-  same volume to V12 successfully; all three document tables exist and the
-  backend is healthy. An authenticated PostgreSQL smoke flow uploaded a local
-  file and updated its metadata through the pessimistic row lock successfully;
-  the generated account, club, database rows, and file were removed afterward.
+Verification on 2026-09-13:
 
-Feature 14 is pending developer review. Do not commit, push, or merge until the
+- `backend/`: `./mvnw.cmd test` passed all 147 tests. Coverage includes
+  trigger mapping, publisher and email failure isolation, read scoping,
+  cross-tenant endpoint denial, scheduled delivery, and an end-to-end payment
+  reminder reaching the intended member feed.
+- `frontend/`: all 59 tests passed; lint and the production build passed.
+- Docker rebuilt the backend and upgraded the existing PostgreSQL 16 volume
+  from V12 to V13. The backend is healthy and the `notifications` table exists.
+- SMTP credentials are not present in this environment, so the SMTP adapter is
+  covered through its boundary and configuration while local delivery uses the
+  logging adapter.
+
+Feature 15 is pending developer review. Do not commit, push, or merge until the
 developers explicitly request it.
 
 ## How to continue safely
@@ -170,7 +171,7 @@ developers explicitly request it.
    project and may have been updated after this guide.
 4. For a non-trivial task, explain the proposed implementation, alternatives,
    trade-offs, and tests; wait for explicit approval before writing code.
-5. Create a focused `feature/...` branch from updated `main` for new work.
+5. Create a focused `codex/...` branch from updated `main` for new work.
 6. Add unit tests for service logic and integration tests proving cross-tenant
    requests fail for every new backend endpoint.
 7. Keep frontend server calls inside TanStack Query hooks under the relevant
@@ -191,13 +192,12 @@ developers explicitly request it.
 - Treat browser permission checks as usability improvements only. The backend
   must always enforce permission and tenant scope.
 
-## Roadmap after Feature 14
+## Roadmap after Feature 15
 
 The planned sequence is:
 
-1. Feature 15: in-app/email notifications and existing trigger wiring.
-2. Feature 16: immutable audit logging and viewer.
-3. Features 17–21: club-type configuration, reports, hardening, deployment,
+1. Feature 16: immutable audit logging and viewer.
+2. Features 17–21: club-type configuration, reports, hardening, deployment,
    and pilot-launch polish.
 
 Use `docs/TEAM_WORKFLOW.md` as the authoritative feature plan. It includes

@@ -23,3 +23,4 @@ export function useRecordPayment(){
     return api.post("/contribution-payments",body)
   },onSuccess:()=>{void client.invalidateQueries({queryKey:["payment-expectations",club()]});void client.invalidateQueries({queryKey:["my-ledger",club()]})}})
 }
+export function useSendContributionReminder(){const client=useQueryClient();return useMutation({mutationFn:(input:Pick<PaymentInput,"scheduleVersionId"|"membershipId"|"dueDate">)=>api.post("/contribution-payments/reminders",input),onSuccess:()=>void client.invalidateQueries({queryKey:["notifications-unread",club()]})})}

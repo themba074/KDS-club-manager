@@ -65,7 +65,7 @@ either of you can pick up the other's feature if it makes sense.
 - Features #0–#12 are merged on `main`.
 
 ## Current Build Status
-- Phase: Documents — Feature 14 implemented, pending review
+- Phase: Notifications — Feature 15 implemented, pending review
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -123,10 +123,13 @@ either of you can pick up the other's feature if it makes sense.
   one-time eligible-member ballots, private pre-publication tallies, immutable
   published result snapshots, simple-majority outcomes, and Voting UI flows.
   Completion and verification notes are in `docs/NEW_ACCOUNT_HANDOVER.md`.
-- Implemented on `feature/document-library`, pending review: #14 — tenant-scoped
+- Landed on `main`: #14 — tenant-scoped
   document upload and listing, role-based visibility, immutable version history,
   authorized downloads, local storage, and a Supabase private-bucket adapter.
-- Next after #14 review/merge: #15 — notification service and trigger wiring.
+- Implemented on `codex/notification-service`, pending review: #15 — durable
+  tenant-scoped in-app notifications, SMTP/log email delivery, unread state,
+  and payment, meeting, voting-window, and minutes-publication triggers.
+- Next after #15 review/merge: #16 — audit logging infrastructure and viewer.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

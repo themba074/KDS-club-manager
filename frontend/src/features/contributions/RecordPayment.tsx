@@ -3,14 +3,14 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { errorMessage } from "@/features/auth/auth-api"
-import { useRecordableExpectations,useRecordPayment,type PaymentInput } from "./payment-hooks"
+import { useRecordableExpectations,useRecordPayment,useSendContributionReminder,type PaymentInput } from "./payment-hooks"
 
 function dateValue(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`}
 function yearRange(){const year=new Date().getFullYear();return [`${year}-01-01`,`${year}-12-31`] as const}
 function key(item:{scheduleVersionId:string;membershipId:string;dueDate:string}){return `${item.scheduleVersionId}|${item.membershipId}|${item.dueDate}`}
 
 export function RecordPayment(){
-  const [from,to]=yearRange(),expectations=useRecordableExpectations(from,to,true),save=useRecordPayment()
+  const [from,to]=yearRange(),expectations=useRecordableExpectations(from,to,true),save=useRecordPayment(),reminder=useSendContributionReminder()
   const outstanding=useMemo(()=>expectations.data?.filter(item=>Number(item.outstanding)>0)??[],[expectations.data])
   const [selected,setSelected]=useState("");const {register,handleSubmit,reset,setValue,formState:{errors}}=useForm<PaymentInput>({defaultValues:{amount:"",receivedOn:dateValue(),reference:"",note:""}})
   const selectedKey=selected||(outstanding[0]?key(outstanding[0]):"")
@@ -29,8 +29,8 @@ export function RecordPayment(){
         <label>Proof (optional)<Input id="payment-proof" type="file" accept="application/pdf,image/jpeg,image/png"/></label>
       </div>
       <label>Note (optional)<textarea className="block min-h-20 w-full rounded-lg border bg-background p-2" maxLength={500} {...register("note")}/></label>
-      {save.error&&<p role="alert" className="text-destructive">{errorMessage(save.error)}</p>}
-      <Button type="submit" disabled={save.isPending}>{save.isPending?"Recording…":"Mark payment received"}</Button>
+      {(save.error||reminder.error)&&<p role="alert" className="text-destructive">{errorMessage(save.error||reminder.error)}</p>}
+      <div className="flex flex-wrap gap-2"><Button type="submit" disabled={save.isPending}>{save.isPending?"Recording…":"Mark payment received"}</Button><Button type="button" variant="outline" disabled={reminder.isPending} onClick={()=>expectation&&reminder.mutate({scheduleVersionId:expectation.scheduleVersionId,membershipId:expectation.membershipId,dueDate:expectation.dueDate})}>{reminder.isPending?"Sending…":"Send reminder"}</Button></div>
     </form>}
   </section>
 }
