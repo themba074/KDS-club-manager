@@ -7,6 +7,7 @@ import com.kds.backend.voting.domain.MotionEntity;
 import com.kds.backend.voting.domain.MotionState;
 import com.kds.backend.voting.repository.MotionRepository;
 import com.kds.backend.voting.repository.VoteRepository;
+import com.kds.backend.config.events.DomainEventPublisher;
 import org.junit.jupiter.api.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +22,7 @@ class MotionServiceTests {
     private final MembershipLifecycleService memberships = mock(MembershipLifecycleService.class);
     private final MemberService members = mock(MemberService.class);
     private final VoteRepository votes = mock(VoteRepository.class);
+    private final DomainEventPublisher events = mock(DomainEventPublisher.class);
     private final UUID club = UUID.randomUUID(), actor = UUID.randomUUID(), member = UUID.randomUUID(), id = UUID.randomUUID();
     private final Instant now = Instant.parse("2026-09-05T10:00:00Z");
     private final Clock clock = Clock.fixed(now, ZoneOffset.UTC);
@@ -28,7 +30,7 @@ class MotionServiceTests {
 
     @BeforeEach void setup() {
         TenantContext.set(club);
-        service = new MotionService(motions, clubs, memberships, members, clock, new MotionMapperImpl(), votes);
+        service = new MotionService(motions, clubs, memberships, members, clock, new MotionMapperImpl(), votes,events);
         when(votes.selections(any())).thenReturn(Map.of());
         when(clubs.requireMembership(actor, club)).thenReturn(new ClubSummary(club, "Club", "INVESTMENT_CLUB", true,
                 List.of("VOTES_READ", "VOTES_CREATE", "VOTES_CAST")));
@@ -41,9 +43,9 @@ class MotionServiceTests {
         MotionEntity motion = motion(now.plusSeconds(60), now.plusSeconds(120));
         when(motions.all()).thenReturn(List.of(motion));
         assertEquals(MotionState.DRAFT, service.all(actor).getFirst().state());
-        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(60), ZoneOffset.UTC), new MotionMapperImpl(), votes);
+        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(60), ZoneOffset.UTC), new MotionMapperImpl(), votes,events);
         assertEquals(MotionState.OPEN, service.all(actor).getFirst().state());
-        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(120), ZoneOffset.UTC), new MotionMapperImpl(), votes);
+        service = new MotionService(motions, clubs, memberships, members, Clock.fixed(now.plusSeconds(120), ZoneOffset.UTC), new MotionMapperImpl(), votes,events);
         assertEquals(MotionState.CLOSED, service.all(actor).getFirst().state());
         motion.cancel(actor, now);
         assertEquals(MotionState.CANCELLED, service.all(actor).getFirst().state());
@@ -90,6 +92,11 @@ class MotionServiceTests {
         order.verify(memberships).lockClub();
         order.verify(clubs).requireMembership(actor, club);
         order.verify(members).activeVotingMembers();
+    }
+    @Test void notificationFailureDoesNotFailMotionCreation(){
+        doThrow(new IllegalStateException("offline")).when(events).publish(any());
+        assertDoesNotThrow(()->service.create(actor,command(List.of("Yes","No"),Set.of(),true)));
+        verify(motions).add(any());verify(motions).flush();
     }
 
     @Test void revokedPermissionUnderLockPreventsWrites() {

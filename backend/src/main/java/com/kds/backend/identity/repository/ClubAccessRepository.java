@@ -34,4 +34,9 @@ public class ClubAccessRepository {
         return entityManager.createQuery("select c.name from ClubEntity c where c.id = :clubId", String.class)
                 .setParameter("clubId", clubId).getResultList().stream().findFirst();
     }
+
+    /** System boundary used only to establish tenant context for bounded background work. */
+    public List<UUID> allClubIds() {
+        return entityManager.createQuery("select c.id from ClubEntity c order by c.id", UUID.class).getResultList();
+    }
 }

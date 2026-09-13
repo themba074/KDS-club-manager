@@ -11,7 +11,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
+import java.time.*;
 import java.util.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,12 +23,15 @@ class ContributionPaymentIntegrationTests {
     @Autowired MockMvc mvc; @Autowired AuthService auth; @Autowired ClubService clubs; @Autowired JdbcTemplate jdbc; @Autowired ObjectMapper json;
     @Test void treasurerRecordsPartialPaymentAndMemberReadsOnlyOwnLedger() throws Exception {
         var owner=account();var club=clubs.create(owner.userId(),"Ledger Club");var ownerSession=auth.selectClub(owner.userId(),owner.refreshToken(),club.id());
-        var member=account();var other=account();UUID memberId=addMember(member,club.id()),otherId=addMember(other,club.id());LocalDate today=LocalDate.now();
+        var member=account();var other=account();UUID memberId=addMember(member,club.id()),otherId=addMember(other,club.id());LocalDate today=LocalDate.now(Clock.systemUTC());
         String schedule=createSchedule(ownerSession,today);UUID versionId=UUID.fromString(json.readTree(schedule).get("versionId").asString());
         var payment=paymentPart(versionId,memberId,today,"40.00");var proof=new MockMultipartFile("proof","receipt.pdf","application/pdf",new byte[]{1,2,3});
         mvc.perform(multipart("/api/v1/contribution-payments").file(payment).file(proof).header("Authorization",bearer(ownerSession)))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.membershipId").value(memberId.toString())).andExpect(jsonPath("$.proofFileName").value("receipt.pdf"));
+        mvc.perform(post("/api/v1/contribution-payments/reminders").header("Authorization",bearer(ownerSession)).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("scheduleVersionId",versionId,"membershipId",memberId,"dueDate",today))))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.outstanding").value(60.00));
         var memberSession=auth.selectClub(member.userId(),member.refreshToken(),club.id());
+        mvc.perform(get("/api/v1/notifications").header("Authorization",bearer(memberSession))).andExpect(status().isOk()).andExpect(jsonPath("$[0].type").value("PAYMENT_REMINDER"));
         mvc.perform(get("/api/v1/contribution-payments/my-ledger").header("Authorization",bearer(memberSession)).param("from",today.toString()).param("to",today.plusDays(20).toString()).param("membershipId",otherId.toString()))
             .andExpect(status().isOk()).andExpect(jsonPath("$.membershipId").value(memberId.toString())).andExpect(jsonPath("$.totalExpected").value(100.00))
             .andExpect(jsonPath("$.totalPaid").value(40.00)).andExpect(jsonPath("$.balance").value(60.00)).andExpect(jsonPath("$.lines.length()").value(2));
@@ -36,10 +39,11 @@ class ContributionPaymentIntegrationTests {
         assertEquals(0,jdbc.queryForObject("select count(*) from contribution_payments where club_id=? and membership_id=?",Integer.class,club.id(),otherId));
     }
     @Test void tenantPredicatesRejectForeignExpectationAndHidePayments() throws Exception {
-        var owner=account();var club=clubs.create(owner.userId(),"First");var session=auth.selectClub(owner.userId(),owner.refreshToken(),club.id());var member=account();UUID memberId=addMember(member,club.id());LocalDate today=LocalDate.now();
+        var owner=account();var club=clubs.create(owner.userId(),"First");var session=auth.selectClub(owner.userId(),owner.refreshToken(),club.id());var member=account();UUID memberId=addMember(member,club.id());LocalDate today=LocalDate.now(Clock.systemUTC());
         UUID versionId=UUID.fromString(json.readTree(createSchedule(session,today)).get("versionId").asString());
         var foreign=account();var foreignClub=clubs.create(foreign.userId(),"Second");var foreignSession=auth.selectClub(foreign.userId(),foreign.refreshToken(),foreignClub.id());
         mvc.perform(multipart("/api/v1/contribution-payments").file(paymentPart(versionId,memberId,today,"10.00")).header("Authorization",bearer(foreignSession))).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/contribution-payments/reminders").header("Authorization",bearer(foreignSession)).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("scheduleVersionId",versionId,"membershipId",memberId,"dueDate",today)))).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/contribution-payments/my-ledger").header("Authorization",bearer(foreignSession)).param("from",today.toString()).param("to",today.plusMonths(1).toString()))
             .andExpect(status().isOk()).andExpect(jsonPath("$.totalPaid").value(0)).andExpect(jsonPath("$.lines").isEmpty());
     }

@@ -234,7 +234,7 @@ Migration V11 adds tenant-scoped ballots and published result snapshots. Its
 composite foreign keys prevent cross-club motion, option, or membership links,
 and Flyway upgrades an existing V10 database without a reset.
 
-## Document library (Feature 14, pending review)
+## Document library (Feature 14)
 
 Open **Documents** after selecting a club. Administrators and Secretaries,
 through `DOCUMENTS_MANAGE`, can upload files up to 5 MB, assign a title and
@@ -252,6 +252,27 @@ after authorization. Storage keys follow
 the tenant-scoped document, visibility-role, and immutable version tables.
 Docker Compose mounts the local storage path on the `storage_data` volume so
 development uploads survive backend container replacement.
+
+## Notifications (Feature 15, pending review)
+
+The notification center stores a tenant-scoped feed for each recipient and
+shows an unread badge in the application header. Members can mark one or all
+visible notifications as read. Managers can send a contribution reminder from
+an outstanding expectation; meeting scheduling, minutes publication, and
+voting windows publish internal events automatically.
+
+Vote-opening messages become visible at the opening instant. Closing reminders
+are scheduled one hour before close, or halfway through voting windows shorter
+than one hour. A background worker establishes `TenantContext` separately for
+each club before selecting due email work. Delivery retries up to three times,
+and notification failures never roll back the action that produced the event.
+
+Local development uses `NOTIFICATION_EMAIL_PROVIDER=log`. Set it to `smtp`
+and configure `NOTIFICATION_FROM_ADDRESS`, `SMTP_HOST`, `SMTP_PORT`,
+`SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, and `SMTP_STARTTLS` for
+real email delivery. Set `MAIL_HEALTH_ENABLED=true` when the configured SMTP
+server should participate in the application health check. Migration V13 adds
+notification persistence and delivery state.
 
 ## Run checks without Docker
 

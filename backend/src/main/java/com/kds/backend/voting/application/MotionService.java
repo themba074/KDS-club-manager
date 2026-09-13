@@ -11,6 +11,8 @@ import com.kds.backend.voting.domain.MotionEntity;
 import com.kds.backend.voting.domain.MotionState;
 import com.kds.backend.voting.repository.MotionRepository;
 import com.kds.backend.voting.repository.VoteRepository;
+import com.kds.backend.config.events.DomainEventPublisher;
+import org.slf4j.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class MotionService {
+    private static final Logger LOGGER=LoggerFactory.getLogger(MotionService.class);
     private final MotionRepository motions;
     private final ClubService clubs;
     private final MembershipLifecycleService memberships;
@@ -34,9 +37,10 @@ public class MotionService {
     private final Clock clock;
     private final MotionMapper mapper;
     private final VoteRepository votes;
+    private final DomainEventPublisher events;
 
     public MotionService(MotionRepository motions, ClubService clubs, MembershipLifecycleService memberships,
-                         MemberService members, Clock clock, MotionMapper mapper, VoteRepository votes) {
+                         MemberService members, Clock clock, MotionMapper mapper, VoteRepository votes,DomainEventPublisher events) {
         this.motions = motions;
         this.clubs = clubs;
         this.memberships = memberships;
@@ -44,6 +48,7 @@ public class MotionService {
         this.clock = clock;
         this.mapper = mapper;
         this.votes = votes;
+        this.events = events;
     }
 
     public List<MotionView> all(UUID actor) {
@@ -60,13 +65,14 @@ public class MotionService {
         // Serialize snapshots with Identity's role and membership status changes.
         memberships.lockClub();
         ClubSummary club = require(actor, Permission.VOTES_CREATE);
-        Set<UUID> eligible = eligible(command);
+        Eligibility eligibility = eligible(command);Set<UUID> eligible=eligibility.membershipIds();
         Instant now = clock.instant();
         validate(command, now, true);
         MotionEntity motion = new MotionEntity(UUID.randomUUID(), TenantContext.requireClubId(), actor, now);
         apply(motion, command, eligible, now);
         motions.add(motion);
         motions.flush();
+        notifySafely(motion,MotionNotificationChanged.Action.SCHEDULED,eligibility.recipients());
         return view(motion, memberships.requireCurrentMembership(actor).membershipId(), club, now, null);
     }
 
@@ -85,7 +91,7 @@ public class MotionService {
         if (state == MotionState.CANCELLED && votes.hasVotes(id)) {
             throw conflict("A cancelled motion with recorded votes cannot be edited.");
         }
-        Set<UUID> eligible = eligible(command);
+        Eligibility eligibility = eligible(command);Set<UUID> eligible=eligibility.membershipIds();
         now = clock.instant();
         // Resolving the membership snapshot must not carry an edit across the opening boundary.
         if (state == MotionState.DRAFT && motion.stateAt(now) != MotionState.DRAFT) {
@@ -95,6 +101,7 @@ public class MotionService {
         // Updating a cancelled motion preserves its cancellation record; it never reopens.
         apply(motion, command, eligible, now);
         motions.flush();
+        if(state==MotionState.DRAFT)notifySafely(motion,MotionNotificationChanged.Action.SCHEDULED,eligibility.recipients());
         return view(motion, memberships.requireCurrentMembership(actor).membershipId(), club, now, null);
     }
 
@@ -110,6 +117,7 @@ public class MotionService {
         Instant now = clock.instant();
         motion.cancel(actor, now);
         motions.flush();
+        notifySafely(motion,MotionNotificationChanged.Action.CANCELLED,List.of());
         return view(motion, memberships.requireCurrentMembership(actor).membershipId(), club, now, null);
     }
 
@@ -118,14 +126,26 @@ public class MotionService {
                 command.closesAt().toInstant(), command.options().stream().map(String::strip).toList(), eligible, now);
     }
 
-    private Set<UUID> eligible(MotionCommand command) {
-        Set<UUID> active = members.activeVotingMembers().stream()
+    private Eligibility eligible(MotionCommand command) {
+        List<VotingEligibleMember> activeMembers=members.activeVotingMembers();
+        Set<UUID> active = activeMembers.stream()
                 .map(VotingEligibleMember::membershipId).collect(Collectors.toSet());
         Set<UUID> selected = command.allActiveMembers() ? active : command.eligibleMembershipIds();
         if (selected == null || selected.isEmpty()) throw bad("Select at least one eligible active member.");
         if (!active.containsAll(selected)) throw bad("Eligible voters must be active members of this club.");
-        return Set.copyOf(selected);
+        Set<UUID> snapshot=Set.copyOf(selected);
+        return new Eligibility(snapshot,activeMembers.stream().filter(member->snapshot.contains(member.membershipId())).toList());
     }
+
+    private void notifySafely(MotionEntity motion,MotionNotificationChanged.Action action,List<VotingEligibleMember> recipients) {
+        try {
+            events.publish(new MotionNotificationChanged(action,motion.getClubId(),motion.getId(),motion.getTitle(),
+                    motion.getOpensAt(),motion.getClosesAt(),recipients));
+        } catch(RuntimeException failure) {
+            LOGGER.warn("Motion saved but notification publication failed motionId={}",motion.getId(),failure);
+        }
+    }
+    private record Eligibility(Set<UUID> membershipIds,List<VotingEligibleMember> recipients){}
 
     private void validate(MotionCommand command, Instant now, boolean requireFutureOpening) {
         if (command.opensAt() == null || command.closesAt() == null

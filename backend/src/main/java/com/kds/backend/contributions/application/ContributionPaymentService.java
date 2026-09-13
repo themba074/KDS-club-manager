@@ -5,6 +5,8 @@ import com.kds.backend.contributions.domain.ContributionPaymentEntity;
 import com.kds.backend.contributions.repository.ContributionPaymentRepository;
 import com.kds.backend.documents.application.FileStorageService;
 import com.kds.backend.identity.application.*;
+import com.kds.backend.config.events.DomainEventPublisher;
+import org.slf4j.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -16,13 +18,14 @@ import java.util.*;
 
 @Service @Transactional(readOnly=true)
 public class ContributionPaymentService {
+    private static final Logger LOGGER=LoggerFactory.getLogger(ContributionPaymentService.class);
     private static final Set<String> PROOF_TYPES=Set.of("application/pdf","image/jpeg","image/png");
     private static final int MAX_PROOF_BYTES=1024*1024;
     private final ContributionPaymentRepository payments; private final ContributionScheduleService schedules;
-    private final ClubService clubs; private final MembershipLifecycleService memberships; private final FileStorageService storage; private final Clock clock;
+    private final ClubService clubs; private final MembershipLifecycleService memberships; private final FileStorageService storage; private final DomainEventPublisher events; private final Clock clock;
     public ContributionPaymentService(ContributionPaymentRepository payments,ContributionScheduleService schedules,ClubService clubs,
-            MembershipLifecycleService memberships,FileStorageService storage,Clock clock){
-        this.payments=payments;this.schedules=schedules;this.clubs=clubs;this.memberships=memberships;this.storage=storage;this.clock=clock;
+            MembershipLifecycleService memberships,FileStorageService storage,DomainEventPublisher events,Clock clock){
+        this.payments=payments;this.schedules=schedules;this.clubs=clubs;this.memberships=memberships;this.storage=storage;this.events=events;this.clock=clock;
     }
     @Transactional
     public PaymentView record(UUID actor,PaymentCommand command,PaymentProof proof){
@@ -33,6 +36,16 @@ public class ContributionPaymentService {
             expectation.dueDate(),command.amount(),expectation.currency(),command.receivedOn(),normalize(command.reference()),normalize(command.note()),actor,now);
         if(proof!=null){var stored=storage.store(clubId,"payment-proofs",proof.fileName(),proof.contentType(),proof.content());payment.attachProof(stored.storageKey(),stored.fileName(),stored.contentType());}
         payments.add(payment); return view(payment,expectation);
+    }
+    public ContributionExpectationStatus remind(UUID actor,UUID versionId,UUID membershipId,LocalDate dueDate){
+        require(actor,Permission.CONTRIBUTIONS_WRITE);
+        ExpectedContribution expected=schedules.requireExpectation(versionId,membershipId,dueDate);
+        BigDecimal paid=payments.forExpectation(versionId,membershipId,dueDate).stream().map(ContributionPaymentEntity::getAmount).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal outstanding=expected.amount().subtract(paid);
+        if(outstanding.signum()<=0)throw new ResponseStatusException(HttpStatus.CONFLICT,"This contribution has no outstanding balance.");
+        try{events.publish(new ContributionReminderRequested(TenantContext.requireClubId(),versionId,membershipId,expected.memberEmail(),expected.memberName(),expected.scheduleName(),dueDate,outstanding,expected.currency()));}
+        catch(RuntimeException failure){LOGGER.warn("Contribution reminder accepted but notification publication failed membershipId={}",membershipId,failure);}
+        return new ContributionExpectationStatus(versionId,expected.scheduleName(),membershipId,expected.memberName(),dueDate,expected.amount(),paid,outstanding,expected.currency());
     }
     public List<ContributionExpectationStatus> recordableExpectations(UUID actor,LocalDate from,LocalDate to){
         require(actor,Permission.CONTRIBUTIONS_WRITE);

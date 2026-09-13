@@ -12,6 +12,7 @@ public final class TenantContext {
         if (clubId == null) throw new AccessDeniedException("Select a club before accessing club data.");
         return clubId;
     }
+    public static UUID currentClubId() { return ACTIVE_CLUB.get(); }
     public static void set(UUID clubId) { ACTIVE_CLUB.set(clubId); }
     public static void clear() { ACTIVE_CLUB.remove(); }
 }
