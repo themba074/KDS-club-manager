@@ -359,8 +359,8 @@ as unavailable rather than revealing another tenant's records.
   edited, so an option's meaning cannot change after a vote is stored.
 - Voting repositories include explicit tenant predicates. Composite foreign
   keys in migration V11 also prevent a vote or result row from combining a
-  motion, option, or membership from different clubs. Structured log events
-  provide the local audit seam until Feature 16 supplies the audit module.
+  motion, option, or membership from different clubs. Feature 16 records vote
+  and result actions in the audit log without storing a voter's chosen option.
 
 #### Feature 14 document library and storage
 
@@ -428,6 +428,13 @@ as unavailable rather than revealing another tenant's records.
 - Secrets (DB credentials, JWT signing key, storage keys) via environment variables / secret manager — never committed.
 - CORS configured explicitly for the known frontend origin(s).
 - Audit log (see PRD §5.11) as a security *and* trust feature — every financial/governance-relevant mutation is recorded with actor, timestamp, and action.
+- Feature 16's `audit_log` stores the club, actor, action, entity reference,
+  optional before/after values, and UTC timestamp. Business services append
+  an entry in the same database transaction as the corresponding action, so a
+  failed audit write rolls the action back. Application code exposes no update
+  or delete operation. The repository always predicates reads on the active
+  tenant, and `GET /api/v1/audit-log` requires `AUDIT_READ`, assigned only to
+  Administrators, with actor/action/date filters and bounded pagination.
 
 ---
 
