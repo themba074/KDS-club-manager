@@ -61,6 +61,10 @@ class VoteIntegrationTests {
         cast(memberSession, motionId(motion), optionId, 409);
         assertEquals(1, jdbc.queryForObject("select count(*) from votes where club_id=? and motion_id=?",
                 Integer.class, fixture.clubId(), motionId(motion)));
+        assertEquals(1, jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='VOTE_CAST'",
+                Integer.class, fixture.clubId()));
+        assertEquals(0, jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='VOTE_CAST' and (previous_value is not null or new_value is not null or entity_id=?)",
+                Integer.class, fixture.clubId(), UUID.fromString(optionId)));
     }
 
     @Test
@@ -142,6 +146,8 @@ class VoteIntegrationTests {
                 Integer.class, fixture.clubId(), motionId));
         assertEquals(2, jdbc.queryForObject("select vote_count from motion_result_option_counts where club_id=? and motion_id=? and option_id=?",
                 Integer.class, fixture.clubId(), motionId, UUID.fromString(yes)));
+        assertEquals(1, jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='VOTE_RESULTS_PUBLISHED' and entity_id=?",
+                Integer.class, fixture.clubId(), motionId));
     }
 
     @Test

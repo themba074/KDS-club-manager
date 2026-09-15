@@ -1,5 +1,6 @@
 package com.kds.backend.documents.application;
 
+import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.clubtypeconfig.application.RoleDefinition;
 import com.kds.backend.clubtypeconfig.application.RoleService;
@@ -34,7 +35,7 @@ class DocumentServiceTests {
     private final MembershipLifecycleService memberships=mock(MembershipLifecycleService.class);private final RoleService roles=mock(RoleService.class);
     private final FileStorageService storage=mock(FileStorageService.class);private final UUID club=UUID.randomUUID(),actor=UUID.randomUUID(),membership=UUID.randomUUID();
     private final Instant now=Instant.parse("2026-09-12T10:00:00Z");private DocumentService service;
-    @BeforeEach void setup(){TenantContext.set(club);service=new DocumentService(documents,clubs,memberships,roles,storage,new DocumentMapperImpl(),Clock.fixed(now,ZoneOffset.UTC));
+    @BeforeEach void setup(){TenantContext.set(club);service=new DocumentService(documents,clubs,memberships,roles,storage,new DocumentMapperImpl(),mock(AuditLogService.class),Clock.fixed(now,ZoneOffset.UTC));
         when(clubs.requireMembership(actor,club)).thenReturn(summary("DOCUMENTS_READ","DOCUMENTS_MANAGE"));when(memberships.requireCurrentMembership(actor)).thenReturn(new MembershipLifecycleMember(membership,actor,"MEMBER","ACTIVE"));
         when(roles.requireRole(eq("INVESTMENT_CLUB"),anyString())).thenAnswer(call->new RoleDefinition(call.getArgument(1),call.getArgument(1),Set.of(Permission.DOCUMENTS_READ)));
         when(roles.roles("INVESTMENT_CLUB")).thenReturn(List.of(new RoleDefinition("MEMBER","Member",Set.of(Permission.DOCUMENTS_READ))));

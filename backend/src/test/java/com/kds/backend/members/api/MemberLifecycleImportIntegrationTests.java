@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -51,6 +52,7 @@ class MemberLifecycleImportIntegrationTests {
         changeStatus(ownerSession, memberId, "ACTIVE", 204);
         changeStatus(ownerSession, memberId, "EXITED", 204);
         changeStatus(ownerSession, memberId, "ACTIVE", 409);
+        assertEquals(3,jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='MEMBER_STATUS_CHANGED' and entity_id=?",Integer.class,club.id(),memberId));
 
         TokenPair foreignOwner = account();
         ClubSummary foreignClub = clubs.create(foreignOwner.userId(), "Foreign Club");
@@ -59,6 +61,7 @@ class MemberLifecycleImportIntegrationTests {
 
         UUID ownerMembership = membershipId(owner.userId(), club.id());
         changeStatus(ownerSession, ownerMembership, "SUSPENDED", 409);
+        assertEquals(3,jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='MEMBER_STATUS_CHANGED' and entity_id=?",Integer.class,club.id(),memberId));
     }
 
     @Test void mixedCsvImportCommitsOnlyValidRowsAndScopesDuplicateChecksToTheCurrentTenant() throws Exception {

@@ -51,6 +51,7 @@ class RoleSecurityIntegrationTests {
         mvc.perform(get("/api/v1/_test/finance").header("Authorization", bearer(session))).andExpect(status().isOk());
         mvc.perform(put("/api/v1/role-members/" + memberId).header("Authorization", bearer(session)).contentType("application/json")
             .content("{\"roleCode\":\"TREASURER\"}")).andExpect(status().isNoContent());
+        assertEquals(1, jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='ROLE_ASSIGNED' and entity_id=?", Integer.class, club.id(), memberId));
         UUID ownerId = membershipId(owner.userId(), club.id());
         mvc.perform(put("/api/v1/role-members/" + ownerId).header("Authorization", bearer(session)).contentType("application/json")
             .content("{\"roleCode\":\"MEMBER\"}")).andExpect(status().isConflict());
@@ -58,6 +59,7 @@ class RoleSecurityIntegrationTests {
             .contentType("application/json").content("{\"roleCode\":\"MEMBER\"}")).andExpect(status().isForbidden());
         mvc.perform(put("/api/v1/role-members/" + memberId).header("Authorization", bearer(session)).contentType("application/json")
             .content("{\"roleCode\":\"UNKNOWN\"}")).andExpect(status().isBadRequest());
+        assertEquals(1, jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='ROLE_ASSIGNED' and entity_id=?", Integer.class, club.id(), memberId));
         mvc.perform(put("/api/v1/role-members/" + memberId).header("Authorization", bearer(session)).contentType("application/json")
             .content("{\"roleCode\":\"\"}")).andExpect(status().isBadRequest());
         TenantContext.set(club.id());

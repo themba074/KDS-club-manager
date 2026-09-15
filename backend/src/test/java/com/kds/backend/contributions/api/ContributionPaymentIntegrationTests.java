@@ -36,6 +36,7 @@ class ContributionPaymentIntegrationTests {
             .andExpect(status().isOk()).andExpect(jsonPath("$.membershipId").value(memberId.toString())).andExpect(jsonPath("$.totalExpected").value(100.00))
             .andExpect(jsonPath("$.totalPaid").value(40.00)).andExpect(jsonPath("$.balance").value(60.00)).andExpect(jsonPath("$.lines.length()").value(2));
         assertEquals(1,jdbc.queryForObject("select count(*) from contribution_payments where club_id=? and membership_id=?",Integer.class,club.id(),memberId));
+        assertEquals(1,jdbc.queryForObject("select count(*) from audit_log where club_id=? and action='PAYMENT_RECORDED'",Integer.class,club.id()));
         assertEquals(0,jdbc.queryForObject("select count(*) from contribution_payments where club_id=? and membership_id=?",Integer.class,club.id(),otherId));
     }
     @Test void tenantPredicatesRejectForeignExpectationAndHidePayments() throws Exception {

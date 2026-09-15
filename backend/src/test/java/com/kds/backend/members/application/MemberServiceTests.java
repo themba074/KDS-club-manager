@@ -1,5 +1,6 @@
 package com.kds.backend.members.application;
 
+import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.clubtypeconfig.application.RoleDefinition;
 import com.kds.backend.clubtypeconfig.application.RoleService;
@@ -42,11 +43,12 @@ class MemberServiceTests {
     private final AuthService authentication = mock(AuthService.class);
     private final SecretTokenService secrets = mock(SecretTokenService.class);
     private final MemberInvitationDelivery delivery = mock(MemberInvitationDelivery.class);
+    private final AuditLogService audit = mock(AuditLogService.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-28T08:00:00Z"), ZoneOffset.UTC);
     private final UUID actor = UUID.randomUUID();
     private final UUID clubId = UUID.randomUUID();
     private final MemberService service = new MemberService(repository, clubs, onboarding, identityDirectory, lifecycle, roles, authentication,
-            secrets, delivery, clock, Duration.ofDays(7));
+            secrets, delivery, audit, clock, Duration.ofDays(7));
 
     @BeforeEach void setContext() { TenantContext.set(clubId); }
     @AfterEach void clearContext() { TenantContext.clear(); }
