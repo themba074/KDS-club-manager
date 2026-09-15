@@ -1,5 +1,7 @@
 package com.kds.backend.contributions.application;
 
+import com.kds.backend.audit.application.AuditLogService;
+import com.kds.backend.audit.domain.AuditAction;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.contributions.domain.ContributionPaymentEntity;
 import com.kds.backend.contributions.repository.ContributionPaymentRepository;
@@ -22,10 +24,10 @@ public class ContributionPaymentService {
     private static final Set<String> PROOF_TYPES=Set.of("application/pdf","image/jpeg","image/png");
     private static final int MAX_PROOF_BYTES=1024*1024;
     private final ContributionPaymentRepository payments; private final ContributionScheduleService schedules;
-    private final ClubService clubs; private final MembershipLifecycleService memberships; private final FileStorageService storage; private final DomainEventPublisher events; private final Clock clock;
+    private final ClubService clubs; private final MembershipLifecycleService memberships; private final FileStorageService storage; private final DomainEventPublisher events; private final AuditLogService audit; private final Clock clock;
     public ContributionPaymentService(ContributionPaymentRepository payments,ContributionScheduleService schedules,ClubService clubs,
-            MembershipLifecycleService memberships,FileStorageService storage,DomainEventPublisher events,Clock clock){
-        this.payments=payments;this.schedules=schedules;this.clubs=clubs;this.memberships=memberships;this.storage=storage;this.events=events;this.clock=clock;
+            MembershipLifecycleService memberships,FileStorageService storage,DomainEventPublisher events,AuditLogService audit,Clock clock){
+        this.payments=payments;this.schedules=schedules;this.clubs=clubs;this.memberships=memberships;this.storage=storage;this.events=events;this.audit=audit;this.clock=clock;
     }
     @Transactional
     public PaymentView record(UUID actor,PaymentCommand command,PaymentProof proof){
@@ -35,7 +37,9 @@ public class ContributionPaymentService {
         var payment=new ContributionPaymentEntity(UUID.randomUUID(),clubId,expectation.scheduleVersionId(),expectation.membershipId(),
             expectation.dueDate(),command.amount(),expectation.currency(),command.receivedOn(),normalize(command.reference()),normalize(command.note()),actor,now);
         if(proof!=null){var stored=storage.store(clubId,"payment-proofs",proof.fileName(),proof.contentType(),proof.content());payment.attachProof(stored.storageKey(),stored.fileName(),stored.contentType());}
-        payments.add(payment); return view(payment,expectation);
+        payments.add(payment);
+        audit.record(actor,AuditAction.PAYMENT_RECORDED,"PAYMENT",payment.getId(),null,null);
+        return view(payment,expectation);
     }
     public ContributionExpectationStatus remind(UUID actor,UUID versionId,UUID membershipId,LocalDate dueDate){
         require(actor,Permission.CONTRIBUTIONS_WRITE);

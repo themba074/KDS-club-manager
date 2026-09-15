@@ -1,5 +1,6 @@
 package com.kds.backend.contributions.application;
 
+import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.contributions.domain.ContributionPaymentEntity;
 import com.kds.backend.contributions.repository.ContributionPaymentRepository;
 import com.kds.backend.documents.application.*;
@@ -17,8 +18,8 @@ class ContributionPaymentServiceTests {
     private final ContributionPaymentRepository payments=mock(ContributionPaymentRepository.class);
     private final ContributionScheduleService schedules=mock(ContributionScheduleService.class);
     private final ClubService clubs=mock(ClubService.class); private final MembershipLifecycleService memberships=mock(MembershipLifecycleService.class);
-    private final FileStorageService storage=mock(FileStorageService.class); private final DomainEventPublisher events=mock(DomainEventPublisher.class);private final Clock clock=Clock.fixed(Instant.parse("2026-09-02T10:00:00Z"),ZoneOffset.UTC);
-    private final ContributionPaymentService service=new ContributionPaymentService(payments,schedules,clubs,memberships,storage,events,clock);
+    private final FileStorageService storage=mock(FileStorageService.class); private final DomainEventPublisher events=mock(DomainEventPublisher.class); private final AuditLogService audit=mock(AuditLogService.class);private final Clock clock=Clock.fixed(Instant.parse("2026-09-02T10:00:00Z"),ZoneOffset.UTC);
+    private final ContributionPaymentService service=new ContributionPaymentService(payments,schedules,clubs,memberships,storage,events,audit,clock);
     private final UUID clubId=UUID.randomUUID(),actor=UUID.randomUUID(),memberId=UUID.randomUUID(),versionId=UUID.randomUUID();
     @BeforeEach void context(){TenantContext.set(clubId);}
     @AfterEach void clear(){TenantContext.clear();}

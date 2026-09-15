@@ -1,5 +1,7 @@
 package com.kds.backend.documents.application;
 
+import com.kds.backend.audit.application.AuditLogService;
+import com.kds.backend.audit.domain.AuditAction;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.clubtypeconfig.application.RoleService;
 import com.kds.backend.documents.domain.DocumentEntity;
@@ -9,8 +11,6 @@ import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.ClubSummary;
 import com.kds.backend.identity.application.MembershipLifecycleService;
 import com.kds.backend.identity.application.TenantContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -34,15 +34,14 @@ public class DocumentService {
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "text/csv","text/plain","image/png","image/jpeg");
-    private static final Logger LOG=LoggerFactory.getLogger(DocumentService.class);
     private final DocumentRepository documents; private final ClubService clubs;
     private final MembershipLifecycleService memberships; private final RoleService roles;
-    private final FileStorageService storage; private final DocumentMapper mapper; private final Clock clock;
+    private final FileStorageService storage; private final DocumentMapper mapper; private final AuditLogService audit; private final Clock clock;
 
     public DocumentService(DocumentRepository documents,ClubService clubs,MembershipLifecycleService memberships,
-                           RoleService roles,FileStorageService storage,DocumentMapper mapper,Clock clock){
+                           RoleService roles,FileStorageService storage,DocumentMapper mapper,AuditLogService audit,Clock clock){
         this.documents=documents;this.clubs=clubs;this.memberships=memberships;this.roles=roles;
-        this.storage=storage;this.mapper=mapper;this.clock=clock;
+        this.storage=storage;this.mapper=mapper;this.audit=audit;this.clock=clock;
     }
 
     public DocumentLibraryView library(UUID actor){
@@ -62,21 +61,22 @@ public class DocumentService {
         StoredFile stored=storage.storeAt(TenantContext.requireClubId(),key,file.fileName(),file.contentType(),file.content());
         var document=new DocumentEntity(documentId,TenantContext.requireClubId(),actor,metadata.title(),metadata.category(),metadata.roles(),clock.instant());
         document.addVersion(versionId,actor,clock.instant(),stored);documents.add(document);documents.flush();
-        audit("document.uploaded",actor,documentId,versionId);return mapper.view(document);
+        audit.record(actor,AuditAction.DOCUMENT_UPLOADED,"DOCUMENT",documentId,null,null);return mapper.view(document);
     }
 
     @Transactional public DocumentView update(UUID actor,UUID id,DocumentCommand command){
         require(actor,Permission.DOCUMENTS_MANAGE);memberships.lockClub();ClubSummary club=require(actor,Permission.DOCUMENTS_MANAGE);
         DocumentEntity document=requireForWrite(id);requireVersion(document,command.version());ValidMetadata metadata=validate(command,club);
         document.updateMetadata(metadata.title(),metadata.category(),metadata.roles(),clock.instant());documents.flush();
-        audit("document.metadata_updated",actor,id,null);return mapper.view(document);
+        audit.record(actor,AuditAction.DOCUMENT_METADATA_UPDATED,"DOCUMENT",id,null,null);return mapper.view(document);
     }
 
     @Transactional public DocumentView replace(UUID actor,UUID id,long version,DocumentUpload upload){
         require(actor,Permission.DOCUMENTS_MANAGE);memberships.lockClub();require(actor,Permission.DOCUMENTS_MANAGE);
         DocumentEntity document=requireForWrite(id);requireVersion(document,version);ValidUpload file=validate(upload);UUID versionId=UUID.randomUUID();
         StoredFile stored=storage.storeAt(TenantContext.requireClubId(),key(id,versionId,file.fileName()),file.fileName(),file.contentType(),file.content());
-        document.addVersion(versionId,actor,clock.instant(),stored);documents.flush();audit("document.version_uploaded",actor,id,versionId);
+        document.addVersion(versionId,actor,clock.instant(),stored);documents.flush();
+        audit.record(actor,AuditAction.DOCUMENT_VERSION_UPLOADED,"DOCUMENT_VERSION",versionId,null,null);
         return mapper.view(document);
     }
 
@@ -114,7 +114,6 @@ public class DocumentService {
     private static String key(UUID document,UUID version,String name){String extension="";int dot=name.lastIndexOf('.');if(dot>=0&&dot>=name.length()-6)extension=name.substring(dot).toLowerCase(Locale.ROOT).replaceAll("[^.a-z0-9]","");return "documents/"+TenantContext.requireClubId()+"/"+document+"/"+version+extension;}
     private static String required(String value,int max,String message){if(value==null||value.isBlank())throw bad(message);String normalized=value.strip();if(normalized.length()>max)throw bad(message);return normalized;}
     private static ResponseStatusException bad(String message){return new ResponseStatusException(HttpStatus.BAD_REQUEST,message);}
-    private static void audit(String event,UUID actor,UUID document,UUID version){LOG.info("audit_event={} actor_id={} club_id={} document_id={} document_version_id={}",event,actor,TenantContext.requireClubId(),document,version);}
     private record ValidMetadata(String title,String category,Set<String> roles){}
     private record ValidUpload(String fileName,String contentType,byte[] content){}
 }

@@ -1,5 +1,7 @@
 package com.kds.backend.voting.application;
 
+import com.kds.backend.audit.application.AuditLogService;
+import com.kds.backend.audit.domain.AuditAction;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.ClubSummary;
@@ -38,15 +40,17 @@ public class VoteService {
     private final MotionResultRepository results;
     private final ClubService clubs;
     private final MembershipLifecycleService memberships;
+    private final AuditLogService audit;
     private final Clock clock;
 
     public VoteService(MotionRepository motions, VoteRepository votes, MotionResultRepository results,
-                       ClubService clubs, MembershipLifecycleService memberships, Clock clock) {
+                       ClubService clubs, MembershipLifecycleService memberships, AuditLogService audit, Clock clock) {
         this.motions = motions;
         this.votes = votes;
         this.results = results;
         this.clubs = clubs;
         this.memberships = memberships;
+        this.audit = audit;
         this.clock = clock;
     }
 
@@ -65,8 +69,11 @@ public class VoteService {
         var option = motion.getOptions().stream().filter(candidate -> candidate.getId().equals(optionId)).findFirst()
                 .orElseThrow(() -> new AccessDeniedException("The selected option is unavailable for this motion."));
         if (votes.exists(motionId, membershipId)) throw conflict("You have already voted on this motion.");
-        votes.add(new VoteEntity(UUID.randomUUID(), TenantContext.requireClubId(), motionId, optionId, membershipId, now));
+        UUID voteId = UUID.randomUUID();
+        votes.add(new VoteEntity(voteId, TenantContext.requireClubId(), motionId, optionId, membershipId, now));
         votes.flush();
+        // The selected option is deliberately absent from the audit record.
+        audit.record(actor, AuditAction.VOTE_CAST, "VOTE", voteId, null, null);
         LOGGER.info("vote_cast clubId={} actorId={} motionId={}", TenantContext.requireClubId(), actor, motionId);
         return new VoteReceipt(motionId, optionId, option.getLabel(), now.atOffset(ZoneOffset.UTC));
     }
@@ -106,6 +113,7 @@ public class VoteService {
         results.addAll(snapshots);
         motion.publishResults(actor, now, tally.outcome().name(), tally.winningOptionId(), tally.totalVotes());
         motions.flush();
+        audit.record(actor, AuditAction.VOTE_RESULTS_PUBLISHED, "MOTION", motionId, null, tally.outcome().name());
         LOGGER.info("motion_results_published clubId={} actorId={} motionId={} outcome={} totalVotes={}",
                 TenantContext.requireClubId(), actor, motionId, tally.outcome(), tally.totalVotes());
         return new MotionResultView(motionId, true, now.atOffset(ZoneOffset.UTC), tally.totalVotes(),

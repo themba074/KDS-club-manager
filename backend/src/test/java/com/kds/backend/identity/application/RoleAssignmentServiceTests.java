@@ -1,4 +1,5 @@
 package com.kds.backend.identity.application;
+import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.clubtypeconfig.application.*;
 import com.kds.backend.identity.domain.*;
 import com.kds.backend.identity.repository.RoleMembershipRepository;
@@ -12,7 +13,7 @@ class RoleAssignmentServiceTests {
     private final RoleMembershipRepository repository = mock(RoleMembershipRepository.class);
     private final ClubService clubs = mock(ClubService.class);
     private final RoleService roles = mock(RoleService.class);
-    private final RoleAssignmentService service = new RoleAssignmentService(repository, clubs, roles);
+    private final RoleAssignmentService service = new RoleAssignmentService(repository, clubs, roles, mock(AuditLogService.class));
     private final UUID actor = UUID.randomUUID(), clubId = UUID.randomUUID(), memberId = UUID.randomUUID();
     @BeforeEach void context() { TenantContext.set(clubId); }
     @AfterEach void clear() { TenantContext.clear(); }

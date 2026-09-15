@@ -1,5 +1,6 @@
 package com.kds.backend.voting.application;
 
+import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.ClubSummary;
 import com.kds.backend.identity.application.MembershipLifecycleMember;
@@ -45,7 +46,7 @@ class VoteServiceTests {
     @BeforeEach
     void setUp() {
         TenantContext.set(clubId);
-        service = new VoteService(motions, votes, results, clubs, memberships, clock);
+        service = new VoteService(motions, votes, results, clubs, memberships, mock(AuditLogService.class), clock);
         when(clubs.requireMembership(actorId, clubId)).thenReturn(summary("VOTES_READ", "VOTES_CREATE", "VOTES_CAST"));
         when(memberships.requireCurrentMembership(actorId))
                 .thenReturn(new MembershipLifecycleMember(membershipId, actorId, "MEMBER", "ACTIVE"));

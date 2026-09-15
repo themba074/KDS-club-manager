@@ -1,5 +1,7 @@
 package com.kds.backend.members.application;
 
+import com.kds.backend.audit.application.AuditLogService;
+import com.kds.backend.audit.domain.AuditAction;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.clubtypeconfig.application.RoleService;
 import com.kds.backend.identity.application.AuthService;
@@ -48,6 +50,7 @@ public class MemberService {
     private final AuthService authentication;
     private final SecretTokenService secrets;
     private final MemberInvitationDelivery delivery;
+    private final AuditLogService audit;
     private final Clock clock;
     private final Duration invitationTtl;
 
@@ -55,7 +58,7 @@ public class MemberService {
                          MemberIdentityDirectoryService identityDirectory, MembershipLifecycleService lifecycle,
                          RoleService roles,
                          AuthService authentication, SecretTokenService secrets, MemberInvitationDelivery delivery,
-                         Clock clock, @Value("${app.members.invitation-token-ttl}") Duration invitationTtl) {
+                         AuditLogService audit, Clock clock, @Value("${app.members.invitation-token-ttl}") Duration invitationTtl) {
         this.members = members;
         this.clubs = clubs;
         this.onboarding = onboarding;
@@ -65,6 +68,7 @@ public class MemberService {
         this.authentication = authentication;
         this.secrets = secrets;
         this.delivery = delivery;
+        this.audit = audit;
         this.clock = clock;
         this.invitationTtl = invitationTtl;
     }
@@ -172,6 +176,8 @@ public class MemberService {
             }
         }
         lifecycle.changeStatus(membershipId, requestedStatus.name());
+        audit.record(actor, AuditAction.MEMBER_STATUS_CHANGED, "MEMBERSHIP", membershipId,
+                currentStatus.name(), requestedStatus.name());
         LOGGER.info("membership_status_changed clubId={} actorId={} membershipId={} from={} to={}",
                 TenantContext.requireClubId(), actor, membershipId, currentStatus, requestedStatus);
     }

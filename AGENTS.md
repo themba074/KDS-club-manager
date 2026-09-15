@@ -62,10 +62,10 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#12 are merged on `main`.
+- Features #0–#15 are merged on `main`.
 
 ## Current Build Status
-- Phase: Notifications — Feature 15 implemented, pending review
+- Phase: Audit — Feature 16 implemented on `feature/audit-log`, pending review
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -126,10 +126,14 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #14 — tenant-scoped
   document upload and listing, role-based visibility, immutable version history,
   authorized downloads, local storage, and a Supabase private-bucket adapter.
-- Implemented on `codex/notification-service`, pending review: #15 — durable
+- Landed on `main`: #15 — durable
   tenant-scoped in-app notifications, SMTP/log email delivery, unread state,
   and payment, meeting, voting-window, and minutes-publication triggers.
-- Next after #15 review/merge: #16 — audit logging infrastructure and viewer.
+- Implemented on `feature/audit-log`, pending review: #16 — append-only,
+  tenant-scoped audit entries for payments, votes and results, role changes,
+  document actions, and membership status; administrator-only filtered viewer;
+  transactional write hooks and tenant-isolation tests.
+- Next after #16 review/merge: #17 — Investment Club/Stokvel template wiring.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

@@ -1,0 +1,12 @@
+package com.kds.backend.audit.domain;
+
+public enum AuditAction {
+    PAYMENT_RECORDED,
+    VOTE_CAST,
+    VOTE_RESULTS_PUBLISHED,
+    ROLE_ASSIGNED,
+    DOCUMENT_UPLOADED,
+    DOCUMENT_METADATA_UPDATED,
+    DOCUMENT_VERSION_UPLOADED,
+    MEMBER_STATUS_CHANGED
+}
