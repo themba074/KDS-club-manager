@@ -23,7 +23,7 @@ summary for agent context, not the full spec.
 - ClubTypeConfig now provides the global Investment Club role/permission
   catalog. Identity owns tenant-scoped membership role assignments.
 - Modular monolith. Modules: Identity/Tenancy, Members, Contributions,
-  Meetings, Voting, Documents, Notifications, Audit, ClubTypeConfig.
+  Meetings, Voting, Documents, Notifications, Audit, Reports, ClubTypeConfig.
 - Modules talk to each other only through their public application-service
   interfaces — never reach into another module's repositories directly.
 - API is REST, versioned (/api/v1), tenant resolved from JWT (not URL).
@@ -62,10 +62,11 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#15 are merged on `main`.
+- Features #0–#16 are merged on `main`.
 
 ## Current Build Status
-- Phase: Audit — Feature 16 implemented on `feature/audit-log`, pending review
+- Phase: Reports — Feature 18 implemented on `feature/reports-dashboard`, pending review.
+  Feature 17 remains in its separate `feature/club-type-templates` PR.
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -129,11 +130,15 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #15 — durable
   tenant-scoped in-app notifications, SMTP/log email delivery, unread state,
   and payment, meeting, voting-window, and minutes-publication triggers.
-- Implemented on `feature/audit-log`, pending review: #16 — append-only,
+- Landed on `main`: #16 — append-only,
   tenant-scoped audit entries for payments, votes and results, role changes,
   document actions, and membership status; administrator-only filtered viewer;
   transactional write hooks and tenant-isolation tests.
-- Next after #16 review/merge: #17 — Investment Club/Stokvel template wiring.
+- In review: #17 — Investment Club/Stokvel template wiring.
+- Implemented on `feature/reports-dashboard`, pending review: #18 —
+  cross-module member, meeting, and voting exports from permission-checked
+  public service boundaries, with one snapshot feeding CSV and PDF.
+- Next: #19 — see `docs/TEAM_WORKFLOW.md` for scope and ownership.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

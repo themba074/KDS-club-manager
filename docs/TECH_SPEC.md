@@ -253,6 +253,22 @@ as unavailable rather than revealing another tenant's records.
   formula characters. PDF output uses Apache PDFBox and paginates member rows.
   Export generation does not create report or temporary-file persistence.
 
+#### Feature 18 cross-module reports
+
+- The Reports module wraps existing Members, Meetings, and Voting application
+  services rather than reading their repositories or duplicating their data
+  rules. The existing contribution report remains the source of truth for
+  contribution figures.
+- `GET /api/v1/reports/{members|meetings|voting}/export` accepts ISO `from`
+  and `to` dates and `CSV` or `PDF` format. It requires `REPORTS_READ` plus
+  the relevant module's read permission. Each request creates one authorized,
+  tenant-scoped snapshot before rendering either format.
+- The member export is a current list including pending invitations; dates do
+  not filter it. Meeting and voting history use UTC dates. Voting history
+  exposes motion metadata and publication state, never unpublished tallies.
+- CSV neutralizes spreadsheet formulas; PDF pages through records. No report
+  data or temporary file is persisted.
+
 #### Meeting scheduling and agenda
 
 - Meetings and agenda items are tenant-owned records. Repository reads use an
