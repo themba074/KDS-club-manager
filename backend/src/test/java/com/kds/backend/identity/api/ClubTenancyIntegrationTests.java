@@ -50,6 +50,40 @@ class ClubTenancyIntegrationTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
     }
 
+    @Test void secondClubTypeComesFromConfigurationAndStaysTenantScoped() throws Exception {
+        TokenPair owner = account();
+        TokenPair stranger = account();
+        mvc.perform(get("/api/v1/club-types").header("Authorization", bearer(owner)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[?(@.code == 'SPORTS_CLUB')].name").value("Sports Club"));
+        MvcResult created = mvc.perform(post("/api/v1/clubs").header("Authorization", bearer(owner))
+                        .contentType("application/json")
+                        .content("{\"name\":\"Riverside FC\",\"clubType\":\"SPORTS_CLUB\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.clubType").value("SPORTS_CLUB"))
+                .andExpect(jsonPath("$.administrator").value(true))
+                .andExpect(jsonPath("$.permissions").isArray()).andReturn();
+        UUID sportsClub = UUID.fromString(JsonPath.read(created.getResponse().getContentAsString(), "$.id"));
+        assertEquals("SPORTS_ADMINISTRATOR", jdbc.queryForObject(
+                "select role_code from club_memberships where club_id = ?", String.class, sportsClub));
+        assertEquals("SPORTS_CLUB", jdbc.queryForObject(
+                "select club_type from clubs where id = ?", String.class, sportsClub));
+        MvcResult selected = select(owner.accessToken(), cookie(owner.refreshToken()), sportsClub);
+        mvc.perform(post("/api/v1/member-invitations")
+                        .header("Authorization", "Bearer " + access(selected))
+                        .contentType("application/json")
+                        .content("{\"email\":\"player@example.test\",\"firstName\":\"A\",\"lastName\":\"Player\"}"))
+                .andExpect(status().isCreated());
+        assertEquals("SPORTS_MEMBER", jdbc.queryForObject(
+                "select role_code from member_invitations where club_id = ? and email = ?",
+                String.class, sportsClub, "player@example.test"));
+        mvc.perform(post("/api/v1/auth/select-club").header("Authorization", bearer(stranger))
+                        .cookie(cookie(stranger.refreshToken())).contentType("application/json")
+                        .content("{\"clubId\":\"" + sportsClub + "\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/clubs").header("Authorization", bearer(stranger)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+    }
+
     @Test void selectionSurvivesRefreshAndSwitchesBetweenMemberships() throws Exception {
         TokenPair owner = account();
         ClubSummary first = clubs.create(owner.userId(), "First");
