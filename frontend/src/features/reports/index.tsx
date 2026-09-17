@@ -1,5 +1,5 @@
-import { ReportExport } from "@/features/contributions/ReportExport"
+import { ReportsDashboard } from "./ReportsDashboard"
 
 export function ReportsPage() {
-  return <ReportExport />
+  return <ReportsDashboard />
 }
