@@ -9,7 +9,7 @@ docs/PRD.md and docs/TECH_SPEC.md for full detail — this file is a
 summary for agent context, not the full spec.
 
 ## Stack
-- Frontend: React 19 + TypeScript + Vite, Zustand (client state), TanStack
+- Frontend: React 19.2 + TypeScript + Vite, Zustand (client state), TanStack
   Query (server state), React Router, Tailwind CSS, shadcn/ui
 - Backend: Java 21, Spring Boot 4.1.0, Spring Security (JWT), Spring Data
   JPA, MapStruct, Flyway
@@ -20,8 +20,9 @@ summary for agent context, not the full spec.
 - Deployment: Docker / Docker Compose, GitHub Actions CI
 
 ## Architecture
-- ClubTypeConfig now provides the global Investment Club role/permission
-  catalog. Identity owns tenant-scoped membership role assignments.
+- ClubTypeConfig provides global club-type templates (roles/permissions,
+  terminology, and enabled modules). Identity owns tenant-scoped membership
+  role assignments. Sports Club is a minimal configuration-only proof type.
 - Modular monolith. Modules: Identity/Tenancy, Members, Contributions,
   Meetings, Voting, Documents, Notifications, Audit, ClubTypeConfig.
 - Modules talk to each other only through their public application-service
@@ -62,10 +63,10 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#15 are merged on `main`.
+- Features #0–#16 are merged on `main`.
 
 ## Current Build Status
-- Phase: Audit — Feature 16 implemented on `feature/audit-log`, pending review
+- Phase: Templates — Feature 17 in progress on `feature/club-type-templates`
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -129,11 +130,13 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #15 — durable
   tenant-scoped in-app notifications, SMTP/log email delivery, unread state,
   and payment, meeting, voting-window, and minutes-publication triggers.
-- Implemented on `feature/audit-log`, pending review: #16 — append-only,
+- Landed on `main`: #16 — append-only,
   tenant-scoped audit entries for payments, votes and results, role changes,
   document actions, and membership status; administrator-only filtered viewer;
   transactional write hooks and tenant-isolation tests.
-- Next after #16 review/merge: #17 — Investment Club/Stokvel template wiring.
+- In progress: #17 — configurable Investment Club and minimal Sports Club
+  templates for roles, terminology, and enabled modules; Thembani will review
+  the pull request before merge.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

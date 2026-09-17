@@ -129,6 +129,18 @@ Roles are configurable per club type (a "Treasurer" role in a stokvel maps to di
 
 ### Authorization model
 
+Feature 17 adds global `club_type_configs` and `club_type_modules` tables.
+Each template declares its administrator and default invitee role codes,
+display terminology, and enabled modules; role-to-permission definitions
+remain in the global `roles` and `role_permissions` tables. Club creation
+validates the selected template and both role codes before assigning the
+creator. `GET /api/v1/club-types` exposes templates to authenticated users
+before they select a tenant. The frontend uses the active template for club
+labels and navigation; backend permission checks continue to enforce access
+to module endpoints. A minimal Sports Club template is seeded in V15 as the
+configuration-only acceptance case. It does not imply sports-specific
+business workflows, which require a separate feature.
+
 - Feature 4: ClubTypeConfig owns the global read-only role catalog and
   role-permission mappings; Identity owns club-scoped assignments. Each
   membership currently has one role. Administrator is the management role
