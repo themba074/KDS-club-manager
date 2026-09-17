@@ -7,6 +7,9 @@ responsive React application.
 New to the project or using a new Codex account? Start with
 [the new-account handover guide](docs/NEW_ACCOUNT_HANDOVER.md).
 
+Features 0–18 are merged on `main`. Feature 19, the dedicated security and
+tenant-isolation review, is next in the planned sequence.
+
 ## Run with Docker
 
 Prerequisites: Docker Desktop with Docker Compose.
@@ -68,7 +71,8 @@ send real email.
 After rebuilding the backend and frontend, open http://localhost:5175 and
 register or log in. You will arrive at **Your clubs**:
 
-1. Enter a club name. Investment Club is currently the only type.
+1. Enter a club name and choose an available club type. Investment Club and a
+   minimal Sports Club template are currently seeded.
 2. Select **Review club**, then **Create club**. You become its administrator
    and enter its workspace.
 3. Use **Switch or create club** in the workspace header to create another
@@ -79,8 +83,10 @@ asks you to select a club again. If membership/session access is rejected,
 sign in again. For now, test session switching in one browser tab; cross-tab
 refresh coordination is not implemented.
 
-Flyway applies the new club tables automatically; no database reset is needed.
-Existing module pages remain placeholders, not live member/contribution data.
+Flyway applies the club and template tables automatically; no database reset is
+needed. Each template controls its terminology, default roles, permissions, and
+enabled navigation modules. The Sports Club template demonstrates configuration
+reuse; it does not add sports-specific workflows.
 
 ## Roles and permissions (Feature 4)
 
@@ -94,10 +100,10 @@ Chairpersons can view the catalog but cannot assign roles. Other roles
 do not see the Roles page. You cannot remove the last administrator.
 To transfer management access, first assign Administrator to another member.
 
-Each membership currently has one role. Roles are Administrator, Chairperson,
-Treasurer, Secretary and Member. Custom role editing and invitations are not
-part of this feature; until Feature 5, a newly created club contains only its
-creator. Do not modify the database manually to test production memberships.
+Each membership currently has one role. Investment Club roles are
+Administrator, Chairperson, Treasurer, Secretary and Member. Custom role
+editing is not exposed. Use the Members invitation flow rather than modifying
+the database manually to create production memberships.
 
 Backend permission removal applies on subsequent requests even with an older
 JWT. Another user's UI updates when their session refreshes or they log in
@@ -115,7 +121,8 @@ Local Docker development prints invitation links to the output of
 `docker compose logs backend`. Following the link creates an account when the email is new, or
 links the club to an existing account. Acceptance signs the person in and
 selects the invited club. Links expire after seven days and can be used once.
-Real email delivery remains part of the later notification feature.
+The SMTP provider described under Feature 15 can deliver invitation emails in
+non-development environments.
 
 ## Contribution schedules (Feature 7)
 
@@ -173,9 +180,9 @@ and edit upcoming meetings with a physical location, an online link, or both.
 Meeting start times preserve their submitted UTC offset. Past meetings cannot
 be edited, and concurrent edits are rejected instead of silently overwriting
 one another. Scheduling publishes a best-effort after-commit event containing
-the active-member audience; local development logs the notification stub.
-Feature 15 will connect that event to real in-app and email delivery. Flyway
-migration V8 creates the tenant-scoped meeting and agenda tables.
+the active-member audience; Feature 15 turns it into durable in-app and email
+notification work. Flyway migration V8 creates the tenant-scoped meeting and
+agenda tables.
 
 ## RSVP and meeting minutes (Feature 11)
 
@@ -253,7 +260,7 @@ the tenant-scoped document, visibility-role, and immutable version tables.
 Docker Compose mounts the local storage path on the `storage_data` volume so
 development uploads survive backend container replacement.
 
-## Notifications (Feature 15, pending review)
+## Notifications (Feature 15)
 
 The notification center stores a tenant-scoped feed for each recipient and
 shows an unread badge in the application header. Members can mark one or all
@@ -273,6 +280,48 @@ and configure `NOTIFICATION_FROM_ADDRESS`, `SMTP_HOST`, `SMTP_PORT`,
 real email delivery. Set `MAIL_HEALTH_ENABLED=true` when the configured SMTP
 server should participate in the application health check. Migration V13 adds
 notification persistence and delivery state.
+
+## Audit log (Feature 16)
+
+Administrators can open **Audit** to review financial and governance actions.
+The viewer supports actor, action, and UTC date filters with bounded pagination.
+Recorded actions include payments, vote casting and result publication, role
+changes, document actions, and membership status changes. Ballot entries record
+that a vote was cast without exposing the selected option.
+
+Audit writes occur in the same database transaction as the business action. A
+failed audit write therefore rolls back that action instead of leaving an
+untraceable change. Application code provides no audit update or delete path,
+and every read includes the active `club_id`. Migration V14 creates the
+append-only audit table and its tenant/filter indexes.
+
+## Club-type templates (Feature 17)
+
+Club creation reads from the global ClubTypeConfig catalog instead of
+hardcoded Investment Club defaults. A template defines its administrator and
+default member roles, display terminology, and enabled modules. The frontend
+uses that configuration for club labels and navigation, while backend
+permission checks remain authoritative.
+
+Investment Club retains the complete current workflow. Sports Club is a small
+configuration-only proof type with a limited module set. Migration V15 seeds
+the template catalog and both templates; existing clubs remain Investment
+Clubs and require no reset.
+
+## Reports dashboard (Feature 18)
+
+Members with `REPORTS_READ` can open **Reports** and export the reports allowed
+by their module permissions. The dashboard combines the existing contribution
+summary with current member and invitation data, meeting history, and closed or
+cancelled voting history. Member exports are current snapshots; meeting and
+voting exports use the selected UTC date range. Unpublished vote counts remain
+private.
+
+Member, meeting, and voting exports use their modules' public application
+services rather than reaching into another module's repositories. Each request
+creates one authorized tenant-scoped snapshot and renders it as CSV or PDF.
+CSV output neutralizes spreadsheet formulas, PDFs paginate, and no report data
+or temporary files are persisted.
 
 ## Run checks without Docker
 
