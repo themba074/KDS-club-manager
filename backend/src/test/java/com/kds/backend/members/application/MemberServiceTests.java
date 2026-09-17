@@ -40,6 +40,7 @@ class MemberServiceTests {
     private final MemberIdentityDirectoryService identityDirectory = mock(MemberIdentityDirectoryService.class);
     private final MembershipLifecycleService lifecycle = mock(MembershipLifecycleService.class);
     private final RoleService roles = mock(RoleService.class);
+    private final com.kds.backend.clubtypeconfig.application.ClubTypeConfigService clubTypes = mock(com.kds.backend.clubtypeconfig.application.ClubTypeConfigService.class);
     private final AuthService authentication = mock(AuthService.class);
     private final SecretTokenService secrets = mock(SecretTokenService.class);
     private final MemberInvitationDelivery delivery = mock(MemberInvitationDelivery.class);
@@ -47,10 +48,14 @@ class MemberServiceTests {
     private final Clock clock = Clock.fixed(Instant.parse("2026-08-28T08:00:00Z"), ZoneOffset.UTC);
     private final UUID actor = UUID.randomUUID();
     private final UUID clubId = UUID.randomUUID();
-    private final MemberService service = new MemberService(repository, clubs, onboarding, identityDirectory, lifecycle, roles, authentication,
+    private final MemberService service = new MemberService(repository, clubs, onboarding, identityDirectory, lifecycle, roles, clubTypes, authentication,
             secrets, delivery, audit, clock, Duration.ofDays(7));
 
-    @BeforeEach void setContext() { TenantContext.set(clubId); }
+    @BeforeEach void setContext() {
+        TenantContext.set(clubId);
+        when(clubTypes.require("INVESTMENT_CLUB")).thenReturn(new com.kds.backend.clubtypeconfig.application.ClubTypeConfig(
+            "INVESTMENT_CLUB", "Investment Club", "ADMINISTRATOR", "MEMBER", "Member", "Contribution", Set.of("MEMBERS")));
+    }
     @AfterEach void clearContext() { TenantContext.clear(); }
 
     @Test void inviteNormalizesInputAndStoresOnlyTheTokenHash() {

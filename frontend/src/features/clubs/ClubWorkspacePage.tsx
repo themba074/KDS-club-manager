@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { errorMessage } from "@/features/auth/auth-api"
-import { useClubs, useSelectClub, useClubContext } from "./club-hooks"
+import { useClubs, useSelectClub, useClubContext, useClubTypes } from "./club-hooks"
 import { CreateClubWizard } from "./CreateClubWizard"
 
 export function ClubWorkspacePage() {
   const clubs = useClubs()
+  const clubTypes = useClubTypes()
   const selection = useSelectClub()
   const activeClub = useClubContext()
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export function ClubWorkspacePage() {
     {clubs.error && <div role="alert"><p>{errorMessage(clubs.error)}</p><Button type="button" onClick={() => void clubs.refetch()}>Retry</Button></div>}
     {clubs.data?.length === 0 && <p>You do not belong to any clubs yet. Create one below to get started.</p>}
     <ul className="space-y-3">{clubs.data?.map((club) => <li key={club.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
-      <div><h2 className="font-semibold">{club.name}</h2><p className="text-sm text-muted-foreground">Investment Club · {club.administrator ? "Administrator" : "Member"}</p></div>
+      <div><h2 className="font-semibold">{club.name}</h2><p className="text-sm text-muted-foreground">{clubTypes.data?.find((type) => type.code === club.clubType)?.name ?? club.clubType} · {club.administrator ? "Administrator" : "Member"}</p></div>
       <Button type="button" disabled={selection.isPending} onClick={() => select(club.id)}>{selection.isPending ? "Switching…" : "Open club"}</Button>
     </li>)}</ul>
     {selection.error && <p role="alert" className="text-destructive">{errorMessage(selection.error)} Your club remains in the list; choose it again to retry.</p>}

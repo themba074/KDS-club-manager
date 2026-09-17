@@ -17,10 +17,13 @@ public class ClubMembershipEntity {
 
     protected ClubMembershipEntity() {}
     public ClubMembershipEntity(UUID id, ClubEntity club, UUID userId, boolean administrator, Instant now) {
+        this(id, club, userId, administrator ? "ADMINISTRATOR" : "MEMBER", now);
+    }
+    public ClubMembershipEntity(UUID id, ClubEntity club, UUID userId, String roleCode, Instant now) {
         this.id = id;
         this.club = club;
         this.userId = userId;
-        this.roleCode = administrator ? "ADMINISTRATOR" : "MEMBER";
+        this.roleCode = roleCode;
         this.status = "ACTIVE";
         this.createdAt = now;
     }

@@ -18,7 +18,13 @@ class ClubServiceTests {
     private final ClubAccessRepository access = mock(ClubAccessRepository.class);
     private final CurrentClubRepository current = mock(CurrentClubRepository.class);
     private final com.kds.backend.clubtypeconfig.application.RoleService roles = mock(com.kds.backend.clubtypeconfig.application.RoleService.class);
-    private final ClubService service = new ClubService(access, current, Clock.systemUTC(), Mappers.getMapper(ClubMapper.class), roles);
+    private final com.kds.backend.clubtypeconfig.application.ClubTypeConfigService clubTypes = mock(com.kds.backend.clubtypeconfig.application.ClubTypeConfigService.class);
+    private final ClubService service = new ClubService(access, current, Clock.systemUTC(), Mappers.getMapper(ClubMapper.class), roles, clubTypes);
+
+    ClubServiceTests() {
+        when(clubTypes.require("INVESTMENT_CLUB")).thenReturn(new com.kds.backend.clubtypeconfig.application.ClubTypeConfig(
+            "INVESTMENT_CLUB", "Investment Club", "ADMINISTRATOR", "MEMBER", "Member", "Contribution", java.util.Set.of("MEMBERS")));
+    }
 
     @Test void createsAdministratorWithNormalizedName() {
         when(roles.requireRole("INVESTMENT_CLUB", "ADMINISTRATOR")).thenReturn(

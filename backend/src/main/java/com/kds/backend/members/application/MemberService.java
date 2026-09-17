@@ -4,6 +4,7 @@ import com.kds.backend.audit.application.AuditLogService;
 import com.kds.backend.audit.domain.AuditAction;
 import com.kds.backend.clubtypeconfig.application.Permission;
 import com.kds.backend.clubtypeconfig.application.RoleService;
+import com.kds.backend.clubtypeconfig.application.ClubTypeConfigService;
 import com.kds.backend.identity.application.AuthService;
 import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.MembershipOnboardingService;
@@ -47,6 +48,7 @@ public class MemberService {
     private final MemberIdentityDirectoryService identityDirectory;
     private final MembershipLifecycleService lifecycle;
     private final RoleService roles;
+    private final ClubTypeConfigService clubTypes;
     private final AuthService authentication;
     private final SecretTokenService secrets;
     private final MemberInvitationDelivery delivery;
@@ -56,7 +58,7 @@ public class MemberService {
 
     public MemberService(MemberRepository members, ClubService clubs, MembershipOnboardingService onboarding,
                          MemberIdentityDirectoryService identityDirectory, MembershipLifecycleService lifecycle,
-                         RoleService roles,
+                         RoleService roles, ClubTypeConfigService clubTypes,
                          AuthService authentication, SecretTokenService secrets, MemberInvitationDelivery delivery,
                          AuditLogService audit, Clock clock, @Value("${app.members.invitation-token-ttl}") Duration invitationTtl) {
         this.members = members;
@@ -65,6 +67,7 @@ public class MemberService {
         this.identityDirectory = identityDirectory;
         this.lifecycle = lifecycle;
         this.roles = roles;
+        this.clubTypes = clubTypes;
         this.authentication = authentication;
         this.secrets = secrets;
         this.delivery = delivery;
@@ -141,7 +144,8 @@ public class MemberService {
         String rawToken = secrets.generate();
         Instant now = clock.instant();
         MemberInvitationEntity invitation = new MemberInvitationEntity(UUID.randomUUID(), TenantContext.requireClubId(),
-                normalizedEmail, firstName.strip(), lastName.strip(), normalizePhone(phone), "MEMBER",
+                normalizedEmail, firstName.strip(), lastName.strip(), normalizePhone(phone),
+                clubTypes.require(require(actor, Permission.MEMBERS_WRITE).clubType()).defaultMemberRoleCode(),
                 secrets.hash(rawToken), now.plus(invitationTtl), actor, now);
         members.saveInvitation(invitation);
         delivery.deliver(normalizedEmail, rawToken);

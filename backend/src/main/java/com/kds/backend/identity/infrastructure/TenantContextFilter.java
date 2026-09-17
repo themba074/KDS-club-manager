@@ -25,7 +25,7 @@ public class TenantContextFilter extends OncePerRequestFilter {
         try {
             String path = request.getRequestURI().substring(request.getContextPath().length());
             boolean tenantRequest = path.startsWith("/api/v1/") && !path.startsWith("/api/v1/auth/")
-                    && !path.equals("/api/v1/clubs");
+                    && !path.equals("/api/v1/clubs") && !path.equals("/api/v1/club-types");
             if (tenantRequest && SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken authentication) {
                 try {
                     String claim = authentication.getToken().getClaimAsString("clubId");

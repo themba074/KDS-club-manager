@@ -8,10 +8,14 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/features/auth/auth-store"
 import { api } from "@/features/auth/auth-api"
 import { useUnreadNotifications } from "@/features/notifications/notification-hooks"
+import { useClubTypes } from "@/features/clubs/club-hooks"
 
 const navigationSections = ["Club", "Governance"] as const
 
 function Brand() {
+  const clubType = useAuthStore((state) => state.activeClub?.clubType)
+  const { data: clubTypes } = useClubTypes()
+  const typeName = clubTypes?.find((type) => type.code === clubType)?.name ?? "Club"
   return (
     <NavLink
       to="/"
@@ -25,7 +29,7 @@ function Brand() {
         <span className="block truncate text-sm font-semibold text-sidebar-foreground">
           Club Manager
         </span>
-        <span className="block truncate text-xs text-muted-foreground">Investment club</span>
+        <span className="block truncate text-xs text-muted-foreground">{typeName}</span>
       </span>
     </NavLink>
   )
@@ -33,6 +37,10 @@ function Brand() {
 
 function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
   const permissions = useAuthStore((state) => state.activeClub?.permissions)
+  const clubType = useAuthStore((state) => state.activeClub?.clubType)
+  const { data: clubTypes } = useClubTypes()
+  const activeTemplate = clubTypes?.find((type) => type.code === clubType)
+  const enabledModules = activeTemplate?.enabledModules
   return (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Main navigation">
       {navigationSections.map((section) => (
@@ -42,7 +50,8 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
           </p>
           <ul className="space-y-1">
             {navigationItems
-              .filter((item) => item.section === section && (!item.permission || permissions?.includes(item.permission)))
+              .filter((item) => item.section === section && (!item.permission || permissions?.includes(item.permission))
+                && (!item.module || !enabledModules || enabledModules.includes(item.module)))
               .map((item) => {
                 const Icon = item.icon
 
@@ -61,7 +70,9 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
                       }
                     >
                       <Icon className="size-[1.125rem]" aria-hidden="true" />
-                      <span>{item.label}</span>
+                      <span>{item.module === "MEMBERS" ? activeTemplate?.memberLabel ?? item.label
+                        : item.module === "CONTRIBUTIONS" ? activeTemplate?.contributionLabel ?? item.label
+                        : item.label}</span>
                     </NavLink>
                   </li>
                 )
