@@ -3,6 +3,25 @@ import axios from "axios"
 import { api, selectClubSession } from "@/features/auth/auth-api"
 import { useAuthStore, type ClubSummary } from "@/features/auth/auth-store"
 
+export type ClubTypeConfig = {
+  code: string
+  name: string
+  administratorRoleCode: string
+  defaultMemberRoleCode: string
+  memberLabel: string
+  contributionLabel: string
+  enabledModules: string[]
+}
+
+export function useClubTypes() {
+  const userId = useAuthStore((state) => state.user?.id)
+  return useQuery({
+    queryKey: ["club-types"],
+    enabled: Boolean(userId),
+    queryFn: ({ signal }) => api.get<ClubTypeConfig[]>("/club-types", { signal }).then(({ data }) => data),
+  })
+}
+
 export function useClubs() {
   const userId = useAuthStore((state) => state.user?.id)
   const switching = useAuthStore((state) => state.switchingClub)
@@ -16,7 +35,7 @@ export function useClubs() {
 export function useCreateClub() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (name: string) => api.post<ClubSummary>("/clubs", { name, clubType: "INVESTMENT_CLUB" }).then(({ data }) => data),
+    mutationFn: ({ name, clubType }: { name: string; clubType: string }) => api.post<ClubSummary>("/clubs", { name, clubType }).then(({ data }) => data),
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["clubs"] }) },
   })
 }

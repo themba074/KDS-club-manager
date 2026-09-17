@@ -14,9 +14,12 @@ public class ClubEntity {
 
     protected ClubEntity() {}
     public ClubEntity(UUID id, String name, Instant now) {
+        this(id, name, "INVESTMENT_CLUB", now);
+    }
+    public ClubEntity(UUID id, String name, String clubType, Instant now) {
         this.id = id;
         this.name = name;
-        this.clubType = "INVESTMENT_CLUB";
+        this.clubType = clubType;
         this.createdAt = now;
     }
     public UUID getId() { return id; }

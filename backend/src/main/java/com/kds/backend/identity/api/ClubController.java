@@ -2,9 +2,10 @@ package com.kds.backend.identity.api;
 
 import com.kds.backend.identity.application.ClubService;
 import com.kds.backend.identity.application.ClubSummary;
+import com.kds.backend.clubtypeconfig.application.ClubTypeConfig;
+import com.kds.backend.clubtypeconfig.application.ClubTypeConfigService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,15 +18,19 @@ import java.util.UUID;
 @RequestMapping("/api/v1")
 public class ClubController {
     private final ClubService clubs;
-    public ClubController(ClubService clubs) { this.clubs = clubs; }
+    private final ClubTypeConfigService clubTypes;
+    public ClubController(ClubService clubs, ClubTypeConfigService clubTypes) { this.clubs = clubs; this.clubTypes = clubTypes; }
 
     public record CreateClubRequest(@NotBlank @Size(max = 120) String name,
-                                   @NotBlank @Pattern(regexp = "INVESTMENT_CLUB") String clubType) {}
+                                   @NotBlank String clubType) {}
+
+    @GetMapping("/club-types")
+    public List<ClubTypeConfig> clubTypes() { return clubTypes.list(); }
 
     @PostMapping("/clubs")
     @ResponseStatus(HttpStatus.CREATED)
     public ClubSummary create(@AuthenticationPrincipal Jwt principal, @Valid @RequestBody CreateClubRequest request) {
-        return clubs.create(UUID.fromString(principal.getSubject()), request.name());
+        return clubs.create(UUID.fromString(principal.getSubject()), request.name(), request.clubType());
     }
 
     @GetMapping("/clubs")
