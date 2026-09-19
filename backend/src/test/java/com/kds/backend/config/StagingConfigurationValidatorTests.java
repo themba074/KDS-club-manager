@@ -1,6 +1,8 @@
 package com.kds.backend.config;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.mock.env.MockEnvironment;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -25,6 +27,24 @@ class StagingConfigurationValidatorTests {
     void rejectsInsecureBrowserOrigins() {
         var environment = secureEnvironment()
                 .withProperty("app.auth.allowed-origins", "http://staging.example.test");
+
+        assertThrows(IllegalStateException.class,
+                () -> new StagingConfigurationValidator(environment).afterPropertiesSet());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "spring.datasource.password, kds_dev_password",
+            "app.auth.development-reset-delivery, true",
+            "app.members.development-invitation-delivery, true",
+            "app.auth.refresh-cookie-secure, false",
+            "app.storage.provider, local",
+            "app.notifications.email-provider, log",
+            "spring.mail.properties.mail.smtp.auth, false",
+            "spring.mail.properties.mail.smtp.starttls.enable, false"
+    })
+    void rejectsUnsafeStagingSettings(String property, String value) {
+        var environment = secureEnvironment().withProperty(property, value);
 
         assertThrows(IllegalStateException.class,
                 () -> new StagingConfigurationValidator(environment).afterPropertiesSet());
