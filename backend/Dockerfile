@@ -11,6 +11,14 @@ RUN ./mvnw -B -ntp package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
 
+ARG APP_VERSION=development
+ARG VCS_REF=unknown
+
+LABEL org.opencontainers.image.title="KDS Club Manager backend" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.source="https://github.com/themba074/KDS-club-manager"
+
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
@@ -20,7 +28,7 @@ RUN apt-get update \
     && chown spring:spring /var/lib/kds-storage
 
 WORKDIR /app
-COPY --from=build /workspace/target/backend-*.jar app.jar
+COPY --chown=spring:spring --from=build /workspace/target/backend-*.jar app.jar
 
 USER spring:spring
 EXPOSE 8080
