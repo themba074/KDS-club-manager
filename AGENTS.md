@@ -63,10 +63,11 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#17 are merged on `main`.
+- Features #0–#18 are merged on `main`.
 
 ## Current Build Status
-- Phase: Reports — Feature 18 implemented on `feature/reports-dashboard`, pending review.
+- Phase: Security review — Feature 19 audit in progress on
+  `feature/security-review`.
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -136,10 +137,12 @@ either of you can pick up the other's feature if it makes sense.
   transactional write hooks and tenant-isolation tests.
 - Landed on `main`: #17 — configurable Investment Club and minimal Sports Club
   templates for roles, terminology, and enabled modules.
-- Implemented on `feature/reports-dashboard`, pending review: #18 —
+- Landed on `main`: #18 —
   cross-module member, meeting, and voting exports from permission-checked
   public service boundaries, with one snapshot feeding CSV and PDF.
-- Next: #19 — see `docs/TEAM_WORKFLOW.md` for scope and ownership.
+- In progress: #19 — checklist-driven security and tenant-isolation review;
+  findings require team review before security-sensitive fixes are applied.
+- Next after #19: #20 — Dockerized deployment and staging CI/CD.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

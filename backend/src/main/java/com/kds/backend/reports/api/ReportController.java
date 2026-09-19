@@ -17,8 +17,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
@@ -38,19 +39,19 @@ public class ReportController {
 
     @GetMapping("/{kind}/export")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
-    public ResponseEntity<StreamingResponseBody> export(@AuthenticationPrincipal Jwt jwt, @PathVariable String kind,
+    public ResponseEntity<byte[]> export(@AuthenticationPrincipal Jwt jwt, @PathVariable String kind,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam ReportFormat format) {
+            @RequestParam ReportFormat format) throws IOException {
         var snapshot = reports.snapshot(UUID.fromString(jwt.getSubject()), kind, from, to);
         String extension = format.name().toLowerCase(Locale.ROOT);
         String filename = kind.toLowerCase(Locale.ROOT) + "-" + from + "-to-" + to + "." + extension;
+        var output = new ByteArrayOutputStream();
+        if (format == ReportFormat.CSV) csv.write(snapshot, output);
+        else pdf.write(snapshot, output);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
                 .contentType(format == ReportFormat.CSV ? MediaType.parseMediaType("text/csv;charset=UTF-8") : MediaType.APPLICATION_PDF)
-                .body(output -> {
-                    if (format == ReportFormat.CSV) csv.write(snapshot, output);
-                    else pdf.write(snapshot, output);
-                });
+                .body(output.toByteArray());
     }
 }
