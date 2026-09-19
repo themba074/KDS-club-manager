@@ -19,7 +19,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -60,20 +59,16 @@ class ReportIntegrationTests {
         var club = clubs.create(owner.userId(), "Reports Club");
         var session = auth.selectClub(owner.userId(), owner.refreshToken(), club.id());
         for (String kind : new String[] {"members", "meetings", "voting"}) {
-            MvcResult csv = mvc.perform(exportRequest(session, kind, "CSV")).andExpect(request().asyncStarted()).andReturn();
-            mvc.perform(asyncDispatch(csv)).andExpect(status().isOk())
+            mvc.perform(exportRequest(session, kind, "CSV")).andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith("text/csv"));
-            MvcResult pdf = mvc.perform(exportRequest(session, kind, "PDF")).andExpect(request().asyncStarted()).andReturn();
-            var result = mvc.perform(asyncDispatch(pdf)).andExpect(status().isOk())
+            var result = mvc.perform(exportRequest(session, kind, "PDF")).andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn();
             assertEquals("%PDF", new String(result.getResponse().getContentAsByteArray(), 0, 4, StandardCharsets.US_ASCII));
         }
     }
 
     private String csv(TokenPair session) throws Exception {
-        MvcResult started = mvc.perform(exportRequest(session, "members", "CSV"))
-                .andExpect(request().asyncStarted()).andReturn();
-        return mvc.perform(asyncDispatch(started)).andExpect(status().isOk())
+        return mvc.perform(exportRequest(session, "members", "CSV")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
     }
 
