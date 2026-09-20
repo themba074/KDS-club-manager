@@ -14,7 +14,7 @@ export function MyLedger(){
   return <section className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">My ledger</h2><p className="text-sm text-muted-foreground">Only your authenticated membership can be shown here.</p></div>
       <div className="flex gap-3"><label>From<input className="block rounded-lg border bg-background p-2" type="date" value={from} onChange={event=>setFrom(event.target.value)}/></label><label>To<input className="block rounded-lg border bg-background p-2" type="date" value={to} onChange={event=>setTo(event.target.value)}/></label></div></div>
-    {ledger.isPending&&<p role="status">Loading your ledger…</p>}{ledger.error&&<ErrorState title="We couldn't load your ledger" description={errorMessage(ledger.error, "Try loading your contribution history again.")} onRetry={() => void ledger.refetch()}/>} 
+    {ledger.isPending&&<p role="status">Loading your ledger…</p>}{ledger.error&&<ErrorState title="We couldn't load your ledger" description={errorMessage(ledger.error, "Try loading your contribution history again.")} onRetry={() => void ledger.refetch()}/>}
     {ledger.data&&<><div className="grid gap-3 sm:grid-cols-3">
       <Card><CardHeader><CardTitle>Expected</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{money(ledger.data.totalExpected)}</CardContent></Card>
       <Card><CardHeader><CardTitle>Paid</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{money(ledger.data.totalPaid)}</CardContent></Card>

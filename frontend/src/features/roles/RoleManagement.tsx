@@ -44,7 +44,7 @@ export function RoleManagement() {
     {canManage && <section className="space-y-4"><h2 className="text-xl font-semibold">Member roles</h2>
       <p className="text-sm text-muted-foreground">Each member has one role. Keep at least one administrator. Invite new members from the Members page.</p>
       {members.isPending && <p role="status">Loading members…</p>}
-      {members.error && <ErrorState title="We couldn't load member roles" description={errorMessage(members.error, "Try loading the member role list again.")} onRetry={() => void members.refetch()}/>} 
+      {members.error && <ErrorState title="We couldn't load member roles" description={errorMessage(members.error, "Try loading the member role list again.")} onRetry={() => void members.refetch()}/>}
       {members.data?.length === 0 && <EmptyState icon={UserRoundCog} title="No members are ready for role assignment" description="Invite members from the Members page. Their role can be reviewed here after they join."/>}
       <ul className="space-y-3">{members.data?.map((member) => <Assignment key={member.id + member.roleCode} member={member} roles={roles.data ?? []} />)}</ul>
     </section>}

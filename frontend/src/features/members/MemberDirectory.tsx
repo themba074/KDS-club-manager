@@ -53,7 +53,7 @@ export function MemberDirectory() {
       </label>
     </div>
     {members.isPending && <LoadingState label="Loading member directory" />}
-    {members.error && <ErrorState title="We couldn't load the member directory" description={errorMessage(members.error, "Try loading the member list again.")} onRetry={() => void members.refetch()}/>} 
+    {members.error && <ErrorState title="We couldn't load the member directory" description={errorMessage(members.error, "Try loading the member list again.")} onRetry={() => void members.refetch()}/>}
     {members.data?.length === 0 && <EmptyState icon={Users} title={search || status !== "ALL" ? "No members match these filters" : "Your member directory is ready to grow"} description={search || status !== "ALL" ? "Try changing your search or status filter." : canInvite ? "Invite one person or use bulk import to start building your club directory." : "An administrator can invite members to this club."} action={search || status !== "ALL" ? <Button variant="outline" onClick={() => { setSearch(""); setStatus("ALL") }}>Clear filters</Button> : canInvite ? <Button onClick={() => setShowInvitation(true)}>Invite the first member</Button> : undefined} />}
     {members.data && members.data.length > 0 && <div className="rounded-xl border bg-card">
       {statusChange.error && <p role="alert" className="border-b p-3 text-sm text-destructive">{errorMessage(statusChange.error)}</p>}
