@@ -179,6 +179,8 @@ it("requires a choice, casts one ballot, and replaces the ballot with a receipt"
   page();
   await screen.findByText("Approve budget");
   fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Choose an option before casting your vote.",
   );
@@ -189,6 +191,8 @@ it("requires a choice, casts one ballot, and replaces the ballot with a receipt"
 
   fireEvent.click(screen.getByLabelText("Yes"));
   fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   await waitFor(() =>
     expect(post).toHaveBeenCalledWith("/motions/motion-1/votes", {
       optionId: "option-1",
@@ -209,6 +213,8 @@ it("keeps the ballot selected when vote submission fails", async () => {
   await screen.findByText("Approve budget");
   fireEvent.click(screen.getByLabelText("No"));
   fireEvent.click(screen.getByRole("button", { name: "Cast vote" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Motion request failed",
   );
@@ -226,6 +232,8 @@ it("lets a manager review a closed tally and publish its immutable snapshot", as
     screen.getByText("No option received a simple majority."),
   ).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Publish results" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   await waitFor(() =>
     expect(post).toHaveBeenCalledWith("/motions/motion-1/results/publish", {
       version: 3,
@@ -393,11 +401,15 @@ it("shows cancellation failures and refreshes after successful cancellation", as
   post.mockRejectedValueOnce(new Error("conflict"));
   page();
   fireEvent.click(await screen.findByRole("button", { name: "Cancel motion" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Motion request failed",
   );
   expect(post).toHaveBeenCalledWith("/motions/motion-1/cancel", { version: 3 });
   fireEvent.click(screen.getByRole("button", { name: "Cancel motion" }));
+  if (screen.queryByRole("dialog"))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
   expect(await screen.findByText("CANCELLED")).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: "Cancel motion" }),

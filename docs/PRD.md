@@ -238,11 +238,9 @@ Grouped by module. Each module is part of the shared core; club-type templates d
 
 ---
 
-## Next Step
+## Current phase
 
-This PRD is a first draft covering Phase 1. Before moving to Phase 2 (Domain Modelling), I'd suggest we review:
-- Whether the MVP club type should indeed be **Investment Club/Stokvel** first, or a different vertical.
-- Whether any Non-Goals need to move into MVP scope.
-- Whether the success metrics feel right for how you'll actually validate this.
-
-Let me know what you'd like to adjust, or say "approved" and we'll move to the Tech Spec / Phase 2.
+The planned feature sequence through #21 is complete as of 2026-09-20. Use this
+PRD as the product baseline for pilot feedback and future scope decisions.
+Investment Club/Stokvel remains the primary type; Sports Club is the minimal
+configuration proof. See AGENTS.md for current status.

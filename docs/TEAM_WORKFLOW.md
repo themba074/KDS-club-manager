@@ -412,8 +412,7 @@ Each entry below is a filled-in starting point for that feature's prompt — cop
 
 **#12 — Motion Creation + Voting Window**
 
-- **Current implementation:** complete locally on `feature/motion-voting-window`,
-  pending review and merge. See `NEW_ACCOUNT_HANDOVER.md` for verification and
+- **Implementation status:** completed. See `NEW_ACCOUNT_HANDOVER.md` for verification and
   remaining handoff steps. Cancelled edits retain cancellation; there is no
   reopen operation. Actual voting remains #13.
 - **Goal:** admins can create a motion (poll) with options and a defined voting window, scoped to eligible voters.
@@ -558,10 +557,10 @@ Keeping `docs/` and the module folders mirrored between backend and frontend mea
 
 ---
 
-## Next Step
+## Current phase
 
-This gives you a working process and a full build sequence from day one through pilot-ready. As you actually start building, expect the §7 order to shift a little around real dependencies — that's fine, just keep `AGENTS.md` honest about what actually happened. Treat this doc itself as living — update it the same way you'll update `AGENTS.md`.
-
-Fill in the **Owner** column in §7.1 (and keep `AGENTS.md` matching it) before you start #1 — who does what doesn't really matter much here, so alternating whole features between you is a reasonable default if you don't already have a preference. The one thing worth deciding early is whether #17's "second club type" acceptance test should target a real second vertical (e.g. Sports Club) or a throwaway test template.
-
-Let me know if you want to adjust the sequence, the prompt templates, or move on to **Phase 2 — Domain Modelling** next.
+The planned sequence #0–#21 is complete as of the team update on 2026-09-20.
+Section 7 remains a reference for delivered scope and original feature prompts.
+Assign follow-up work from pilot feedback, usability reviews, and the open
+security findings. Continue using the review and verification workflow above,
+and keep AGENTS.md synchronized with the current work.

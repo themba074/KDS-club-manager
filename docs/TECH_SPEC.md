@@ -498,10 +498,9 @@ See the companion **Team Workflow & AI Agent Collaboration Guide** for the actua
 
 ---
 
-## Next Step
+## Current phase
 
-This covers the system-design-level tech spec. Natural next steps from here, in the spirit of the original phased plan:
-1. Confirm this stack/architecture (especially the React state-management choice and the multi-tenancy approach) before we go deeper.
-2. Move into **Domain Modelling** (entities, aggregates, bounded contexts) — this is what the database design and UML in later phases will build on.
-
-Let me know if you want to adjust anything here, or say "approved" and we'll move to domain modelling.
+The planned feature sequence through #21 is complete as of 2026-09-20. This
+specification remains the architectural baseline for maintenance and pilot
+feedback. Preserve tenant scoping and public module boundaries when making
+quality fixes; track unresolved security findings in SECURITY_REVIEW_FEATURE_19.md.

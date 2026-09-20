@@ -7,8 +7,21 @@ responsive React application.
 New to the project or using a new Codex account? Start with
 [the new-account handover guide](docs/NEW_ACCOUNT_HANDOVER.md).
 
-Features 0–18 are merged on `main`. Feature 19, the dedicated security and
-tenant-isolation review, is next in the planned sequence.
+The planned feature sequence #0–#21 is complete, including foundation #0,
+staging delivery infrastructure, and pilot onboarding polish (team confirmation:
+2026-09-20). Work now focuses on usability, validation, and pilot feedback.
+Staging still requires the configuration in [the deployment guide](docs/STAGING_DEPLOYMENT.md);
+open security findings remain in [the security review](docs/SECURITY_REVIEW_FEATURE_19.md).
+
+Consequential actions show a review dialog before execution: member status and
+role changes, payment recording and reminders, contribution schedule creation or
+revisions, meeting scheduling or edits, final ballots, motion cancellation,
+publication of minutes or voting results, and document access/version changes.
+Choose **Go back** to leave the record unchanged. Minutes files are selected first and uploaded explicitly; save
+notes before attaching files or publishing. Payment proof is limited to 1 MB;
+minutes attachments and library documents are limited to 5 MB. The dashboard
+provides permission-aware workspace shortcuts; live statistics are available in
+the relevant module pages and reports.
 
 ## Run with Docker
 

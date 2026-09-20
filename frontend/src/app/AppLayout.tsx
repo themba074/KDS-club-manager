@@ -1,4 +1,4 @@
-import { Bell, ChevronDown, Menu, X } from "lucide-react"
+import { Bell, ChevronDown, Landmark, Menu, X } from "lucide-react"
 import { useState } from "react"
 import { NavLink, Outlet } from "react-router-dom"
 
@@ -19,15 +19,15 @@ function Brand() {
   return (
     <NavLink
       to="/"
-      className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="flex items-center gap-3 rounded-xl px-1 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       aria-label="KDS Club Manager home"
     >
-      <span className="grid size-9 place-items-center rounded-xl bg-sidebar-primary text-sm font-bold tracking-tight text-sidebar-primary-foreground shadow-sm">
-        KDS
+      <span className="grid size-10 place-items-center rounded-xl bg-[#d9ad50] text-sidebar text-sm font-bold tracking-tight shadow-sm">
+        <Landmark className="size-5" aria-hidden="true" />
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold text-sidebar-foreground">
-          Club Manager
+          KDS Club Manager
         </span>
         <span className="block truncate text-xs text-muted-foreground">{typeName}</span>
       </span>
@@ -42,10 +42,10 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
   const activeTemplate = clubTypes?.find((type) => type.code === clubType)
   const enabledModules = activeTemplate?.enabledModules
   return (
-    <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Main navigation">
+    <nav className="flex-1 space-y-7 overflow-y-auto px-3 py-6" aria-label="Main navigation">
       {navigationSections.map((section) => (
         <div key={section}>
-          <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/55">
             {section}
           </p>
           <ul className="space-y-1">
@@ -63,7 +63,7 @@ function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
                       onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(
-                          "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                          "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                           isActive &&
                             "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
                         )
@@ -89,23 +89,23 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const clearSession = useAuthStore((state) => state.clearSession)
   return (
     <>
-      <div className="border-b border-sidebar-border p-4">
+      <div className="border-b border-sidebar-border px-4 py-5">
         <Brand />
       </div>
       <SidebarNavigation onNavigate={onNavigate} />
-      <div className="border-t border-sidebar-border p-3">
+      <div className="m-3 mt-0 rounded-xl border border-sidebar-border bg-sidebar-accent/35 p-2">
         <button onClick={() => void api.post("/auth/logout").finally(clearSession)}
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          className="flex w-full items-center gap-3 rounded-lg p-2 text-left text-sidebar-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d9ad50] text-xs font-semibold text-sidebar">
             {user?.email.slice(0, 2).toUpperCase() ?? "?"}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{user?.email}</span>
-            <span className="block truncate text-xs text-muted-foreground">Log out</span>
+            <span className="block truncate text-xs text-sidebar-foreground/60">Log out</span>
           </span>
-          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+          <ChevronDown className="size-4 text-sidebar-foreground/60" aria-hidden="true" />
         </button>
       </div>
     </>
@@ -119,7 +119,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[16.5rem] flex-col border-r border-sidebar-border bg-sidebar lg:flex">
         <Sidebar />
       </aside>
 
@@ -148,8 +148,8 @@ export function AppLayout() {
         </div>
       )}
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="lg:pl-[16.5rem]">
+        <header className="sticky top-0 z-20 flex h-[4.5rem] items-center gap-3 border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <Button
             variant="ghost"
             size="icon"
@@ -160,14 +160,20 @@ export function AppLayout() {
             <Menu aria-hidden="true" />
           </Button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{activeClub?.name}</p>
-            <NavLink to="/clubs" className="text-xs text-primary underline">Switch or create club</NavLink>
+            <NavLink to="/clubs" className="group inline-flex max-w-full items-center gap-2 rounded-lg py-1 pr-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Landmark className="size-4" aria-hidden="true" /></span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{activeClub?.name ?? "Select a club"}</span>
+                <span className="block text-xs text-muted-foreground group-hover:text-primary">Switch or create club</span>
+              </span>
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </NavLink>
           </div>
-          <NavLink to="/notifications" className="relative grid size-8 place-items-center rounded-lg hover:bg-muted" aria-label={`${unreadNotifications.data??0} unread notifications`}>
+          <NavLink to="/notifications" className="relative grid size-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={`${unreadNotifications.data??0} unread notifications`}>
             <Bell aria-hidden="true" />{Boolean(unreadNotifications.data)&&<span className="absolute -right-1 -top-1 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">{Math.min(unreadNotifications.data??0,99)}</span>}
           </NavLink>
-          <span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground lg:hidden">
-            TS
+          <span className="grid size-9 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground lg:hidden">
+            {activeClub?.name.slice(0, 2).toUpperCase() ?? "CM"}
           </span>
         </header>
 

@@ -96,7 +96,11 @@ while starting workers. `--maxWorkers=1` is the reliable local command.
 
 ## What has landed
 
-Features 0 through 13 are merged on `main`:
+The planned sequence #0–#21 is complete as of the team update on 2026-09-20.
+The current phase is quality review and pilot feedback. Staging configuration
+and open security findings must still be checked independently.
+
+Delivered capabilities:
 
 | Feature | Delivered capability |
 | --- | --- |
@@ -106,13 +110,17 @@ Features 0 through 13 are merged on `main`:
 | 10–11 | Meeting scheduling/agendas, RSVP, draft/published minutes, and secured minute attachments |
 | 12 | Motion creation, voter snapshots, voting windows, and cancellation |
 | 13 | One-time ballots, private tallies, and immutable published results |
+| 14–16 | Document library, notifications, and audit trail |
+| 17–18 | Club-type configuration and cross-module reporting |
+| 19 | Security and tenant-isolation review; open findings tracked separately |
+| 20–21 | Staging deployment infrastructure and pilot onboarding polish |
 
 For detailed usage notes, read the feature sections in `README.md`.
 
-## Current work: Feature 15
+## Historical implementation notes: Feature 15
 
-Features 0 through 14 are merged on `main`. Feature 15 is implemented locally
-on:
+At the time of these notes, features 0 through 14 had landed and Feature 15
+was implemented on:
 
 ```text
 codex/notification-service
@@ -153,8 +161,8 @@ Verification on 2026-09-13:
   covered through its boundary and configuration while local delivery uses the
   logging adapter.
 
-Feature 15 is pending developer review. Do not commit, push, or merge until the
-developers explicitly request it.
+Feature 15 has since been completed. The verification counts above are a
+historical snapshot, not the current regression-test totals.
 
 ## How to continue safely
 

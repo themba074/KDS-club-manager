@@ -1,18 +1,305 @@
-import { fireEvent,render,screen,waitFor,within } from "@testing-library/react"
-import { QueryClient,QueryClientProvider } from "@tanstack/react-query"
-import { beforeEach,expect,it,vi } from "vitest"
-import { useAuthStore } from "@/features/auth/auth-store"
-import { MeetingsPage } from "./index"
-const {get,post,put}=vi.hoisted(()=>({get:vi.fn(),post:vi.fn(),put:vi.fn()}))
-vi.mock("@/features/auth/auth-api",()=>({api:{get,post,put},errorMessage:()=>"Meeting failed"}))
-const upcoming={id:"meeting-1",version:0,title:"Committee meeting",description:"Club business",startsAt:"2026-10-03T10:00:00+02:00",durationMinutes:60,location:"Community hall",meetingUrl:null,agendaItems:[{id:"agenda-1",position:0,title:"Opening",description:null},{id:"agenda-2",position:1,title:"Finance",description:null}]}
-const past={...upcoming,id:"meeting-past",title:"Annual general meeting",startsAt:"2026-08-03T10:00:00+02:00"}
-const draft={id:"minutes-1",version:0,body:"Approved the budget",attachmentName:null,attachmentSize:null,publishedAt:null,published:false}
-beforeEach(()=>{vi.clearAllMocks();useAuthStore.getState().setSession("token",{id:"owner",email:"owner@example.test"},{id:"club",name:"Club",clubType:"INVESTMENT_CLUB",administrator:true,permissions:["MEETINGS_READ","MEETINGS_WRITE"]});get.mockImplementation((path:string,config?:{params?:{view:string}})=>{if(path==="/meetings")return Promise.resolve({data:config?.params?.view==="UPCOMING"?[upcoming]:[past]});if(path.endsWith("/rsvp"))return Promise.resolve({data:{response:null,counts:{yes:1,no:0,maybe:0}}});if(path.endsWith("/minutes"))return Promise.resolve({data:draft});return Promise.resolve({data:{}})});post.mockResolvedValue({data:{...draft,published:true,publishedAt:"2026-09-04T10:00:00Z",version:1}});put.mockImplementation((path:string)=>Promise.resolve({data:path.endsWith("/rsvp")?{response:"YES",counts:{yes:2,no:0,maybe:0}}:{...upcoming,version:1}}))})
-function page(){render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})}><MeetingsPage/></QueryClientProvider>)}
-it("shows upcoming and past sections to read-only members",async()=>{useAuthStore.setState(state=>({activeClub:{...state.activeClub!,permissions:["MEETINGS_READ"]}}));page();expect(await screen.findByText("Committee meeting")).toBeInTheDocument();expect(screen.getByRole("heading",{name:"Past meetings"})).toBeInTheDocument();expect(screen.queryByRole("heading",{name:"Schedule a meeting"})).not.toBeInTheDocument();expect(screen.queryByRole("button",{name:"Edit meeting"})).not.toBeInTheDocument()})
-it("creates a meeting with agenda in the displayed order",async()=>{page();await screen.findByText("Committee meeting");fireEvent.change(screen.getByLabelText("Title"),{target:{value:"Annual meeting"}});fireEvent.change(screen.getByLabelText("Physical location"),{target:{value:"Main hall"}});fireEvent.change(screen.getByLabelText("Item 1 title"),{target:{value:"Welcome"}});fireEvent.click(screen.getByRole("button",{name:"Add agenda item"}));fireEvent.change(screen.getByLabelText("Item 2 title"),{target:{value:"Budget"}});fireEvent.click(screen.getByRole("button",{name:"Schedule meeting"}));await waitFor(()=>expect(post).toHaveBeenCalledWith("/meetings",expect.objectContaining({title:"Annual meeting",location:"Main hall",agendaItems:[expect.objectContaining({title:"Welcome"}),expect.objectContaining({title:"Budget"})]})))})
-it("reorders the agenda and submits the optimistic version on edit",async()=>{page();fireEvent.click(await screen.findByRole("button",{name:"Edit meeting"}));const form=screen.getByRole("heading",{name:"Edit meeting"}).closest("form")!;const buttons=within(form).getAllByRole("button",{name:"Move up"});fireEvent.click(buttons[1]);fireEvent.click(within(form).getByRole("button",{name:"Save meeting"}));await waitFor(()=>expect(put).toHaveBeenCalledWith("/meetings/meeting-1",expect.objectContaining({version:0,agendaItems:[expect.objectContaining({title:"Finance"}),expect.objectContaining({title:"Opening"})]})))})
-it("shows save failures without claiming success",async()=>{post.mockRejectedValue(new Error("offline"));page();await screen.findByText("Committee meeting");fireEvent.change(screen.getByLabelText("Title"),{target:{value:"Failed"}});fireEvent.change(screen.getByLabelText("Physical location"),{target:{value:"Hall"}});fireEvent.change(screen.getByLabelText("Item 1 title"),{target:{value:"Item"}});fireEvent.click(screen.getByRole("button",{name:"Schedule meeting"}));expect(await screen.findByRole("alert")).toHaveTextContent("Meeting failed")})
-it("updates an RSVP and its manager count without reloading the page",async()=>{page();const meeting=await screen.findByText("Committee meeting");const card=meeting.closest("li")!;fireEvent.click(within(card).getByRole("button",{name:"Show participation and minutes"}));fireEvent.click(await within(card).findByRole("button",{name:"Yes"}));await waitFor(()=>expect(put).toHaveBeenCalledWith("/meetings/meeting-1/rsvp",{response:"YES"}));expect(await within(card).findByText(/2 yes/)).toBeInTheDocument()})
-it("publishes draft minutes from a past meeting",async()=>{page();const meeting=await screen.findByText("Annual general meeting");const card=meeting.closest("li")!;fireEvent.click(within(card).getByRole("button",{name:"Show participation and minutes"}));fireEvent.click(await within(card).findByRole("button",{name:"Publish minutes"}));await waitFor(()=>expect(post).toHaveBeenCalledWith("/meetings/meeting-past/minutes/publish",{version:0}))})
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { beforeEach, expect, it, vi } from "vitest";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { MeetingsPage } from "./index";
+const { get, post, put } = vi.hoisted(() => ({
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+}));
+vi.mock("@/features/auth/auth-api", () => ({
+  api: { get, post, put },
+  errorMessage: () => "Meeting failed",
+}));
+const upcoming = {
+  id: "meeting-1",
+  version: 0,
+  title: "Committee meeting",
+  description: "Club business",
+  startsAt: "2026-10-03T10:00:00+02:00",
+  durationMinutes: 60,
+  location: "Community hall",
+  meetingUrl: null,
+  agendaItems: [
+    { id: "agenda-1", position: 0, title: "Opening", description: null },
+    { id: "agenda-2", position: 1, title: "Finance", description: null },
+  ],
+};
+const past = {
+  ...upcoming,
+  id: "meeting-past",
+  title: "Annual general meeting",
+  startsAt: "2026-08-03T10:00:00+02:00",
+};
+const draft = {
+  id: "minutes-1",
+  version: 0,
+  body: "Approved the budget",
+  attachmentName: null,
+  attachmentSize: null,
+  publishedAt: null,
+  published: false,
+};
+beforeEach(() => {
+  vi.clearAllMocks();
+  useAuthStore.getState().setSession(
+    "token",
+    { id: "owner", email: "owner@example.test" },
+    {
+      id: "club",
+      name: "Club",
+      clubType: "INVESTMENT_CLUB",
+      administrator: true,
+      permissions: ["MEETINGS_READ", "MEETINGS_WRITE"],
+    },
+  );
+  get.mockImplementation(
+    (path: string, config?: { params?: { view: string } }) => {
+      if (path === "/meetings")
+        return Promise.resolve({
+          data: config?.params?.view === "UPCOMING" ? [upcoming] : [past],
+        });
+      if (path.endsWith("/rsvp"))
+        return Promise.resolve({
+          data: { response: null, counts: { yes: 1, no: 0, maybe: 0 } },
+        });
+      if (path.endsWith("/minutes")) return Promise.resolve({ data: draft });
+      return Promise.resolve({ data: {} });
+    },
+  );
+  post.mockResolvedValue({
+    data: {
+      ...draft,
+      published: true,
+      publishedAt: "2026-09-04T10:00:00Z",
+      version: 1,
+    },
+  });
+  put.mockImplementation((path: string) =>
+    Promise.resolve({
+      data: path.endsWith("/rsvp")
+        ? { response: "YES", counts: { yes: 2, no: 0, maybe: 0 } }
+        : { ...upcoming, version: 1 },
+    }),
+  );
+});
+function page() {
+  render(
+    <QueryClientProvider
+      client={
+        new QueryClient({
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
+        })
+      }
+    >
+      <MeetingsPage />
+    </QueryClientProvider>,
+  );
+}
+it("shows upcoming and past sections to read-only members", async () => {
+  useAuthStore.setState((state) => ({
+    activeClub: { ...state.activeClub!, permissions: ["MEETINGS_READ"] },
+  }));
+  page();
+  expect(await screen.findByText("Committee meeting")).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Past meetings" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("heading", { name: "Schedule a meeting" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Edit meeting" }),
+  ).not.toBeInTheDocument();
+});
+it("creates a meeting with agenda in the displayed order", async () => {
+  page();
+  await screen.findByText("Committee meeting");
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Annual meeting" },
+  });
+  fireEvent.change(screen.getByLabelText("Physical location"), {
+    target: { value: "Main hall" },
+  });
+  fireEvent.change(screen.getByLabelText("Item 1 title"), {
+    target: { value: "Welcome" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Add agenda item" }));
+  fireEvent.change(screen.getByLabelText("Item 2 title"), {
+    target: { value: "Budget" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Schedule meeting" }));
+  expect(post).not.toHaveBeenCalled();
+  expect(await screen.findByRole("dialog")).toHaveTextContent("Annual meeting");
+  fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith(
+      "/meetings",
+      expect.objectContaining({
+        title: "Annual meeting",
+        location: "Main hall",
+        agendaItems: [
+          expect.objectContaining({ title: "Welcome" }),
+          expect.objectContaining({ title: "Budget" }),
+        ],
+      }),
+    ),
+  );
+});
+it("reorders the agenda and submits the optimistic version on edit", async () => {
+  page();
+  fireEvent.click(await screen.findByRole("button", { name: "Edit meeting" }));
+  const form = screen
+    .getByRole("heading", { name: "Edit meeting" })
+    .closest("form")!;
+  const buttons = within(form).getAllByRole("button", { name: "Move up" });
+  fireEvent.click(buttons[1]);
+  fireEvent.click(within(form).getByRole("button", { name: "Save meeting" }));
+  expect(put).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+  await waitFor(() =>
+    expect(put).toHaveBeenCalledWith(
+      "/meetings/meeting-1",
+      expect.objectContaining({
+        version: 0,
+        agendaItems: [
+          expect.objectContaining({ title: "Finance" }),
+          expect.objectContaining({ title: "Opening" }),
+        ],
+      }),
+    ),
+  );
+});
+it("shows save failures without claiming success", async () => {
+  post.mockRejectedValue(new Error("offline"));
+  page();
+  await screen.findByText("Committee meeting");
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Failed" },
+  });
+  fireEvent.change(screen.getByLabelText("Physical location"), {
+    target: { value: "Hall" },
+  });
+  fireEvent.change(screen.getByLabelText("Item 1 title"), {
+    target: { value: "Item" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Schedule meeting" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Meeting failed");
+});
+
+it("keeps a meeting unchanged when its review is cancelled", async () => {
+  page();
+  await screen.findByText("Committee meeting");
+  fireEvent.change(screen.getByLabelText("Title"), {
+    target: { value: "Draft review" },
+  });
+  fireEvent.change(screen.getByLabelText("Physical location"), {
+    target: { value: "Hall" },
+  });
+  fireEvent.change(screen.getByLabelText("Item 1 title"), {
+    target: { value: "Opening" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Schedule meeting" }));
+  expect(await screen.findByRole("dialog")).toHaveTextContent("Draft review");
+  fireEvent.click(screen.getByRole("button", { name: "Go back" }));
+  expect(post).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Title")).toHaveValue("Draft review");
+});
+it("updates an RSVP and its manager count without reloading the page", async () => {
+  page();
+  const meeting = await screen.findByText("Committee meeting");
+  const card = meeting.closest("li")!;
+  fireEvent.click(
+    within(card).getByRole("button", {
+      name: "Show participation and minutes",
+    }),
+  );
+  fireEvent.click(await within(card).findByRole("button", { name: "Yes" }));
+  await waitFor(() =>
+    expect(put).toHaveBeenCalledWith("/meetings/meeting-1/rsvp", {
+      response: "YES",
+    }),
+  );
+  expect(await within(card).findByText(/2 yes/)).toBeInTheDocument();
+});
+it("publishes draft minutes from a past meeting", async () => {
+  page();
+  const meeting = await screen.findByText("Annual general meeting");
+  const card = meeting.closest("li")!;
+  fireEvent.click(
+    within(card).getByRole("button", {
+      name: "Show participation and minutes",
+    }),
+  );
+  fireEvent.click(
+    await within(card).findByRole("button", { name: "Publish minutes" }),
+  );
+  expect(post).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith(
+      "/meetings/meeting-past/minutes/publish",
+      { version: 0 },
+    ),
+  );
+});
+
+it("blocks publishing when the editor has unsaved notes", async () => {
+  page();
+  const meeting = await screen.findByText("Annual general meeting");
+  const card = meeting.closest("li")!;
+  fireEvent.click(
+    within(card).getByRole("button", {
+      name: "Show participation and minutes",
+    }),
+  );
+  await within(card).findByRole("button", { name: "Publish minutes" });
+  fireEvent.change(within(card).getByLabelText("Meeting notes"), {
+    target: { value: "Unsaved decision" },
+  });
+  fireEvent.click(
+    within(card).getByRole("button", { name: "Publish minutes" }),
+  );
+  expect(within(card).getByRole("alert")).toHaveTextContent("Save your notes");
+  expect(post).not.toHaveBeenCalled();
+});
+
+it("selects an attachment without uploading and rejects empty files", async () => {
+  page();
+  const card = (await screen.findByText("Annual general meeting")).closest(
+    "li",
+  )!;
+  fireEvent.click(
+    within(card).getByRole("button", {
+      name: "Show participation and minutes",
+    }),
+  );
+  await within(card).findByRole("button", { name: "Publish minutes" });
+  fireEvent.change(
+    within(card).getByLabelText(
+      "Attach PDF, DOCX, or text file (maximum 5 MB)",
+    ),
+    {
+      target: {
+        files: [new File([], "empty.pdf", { type: "application/pdf" })],
+      },
+    },
+  );
+  expect(post).not.toHaveBeenCalled();
+  fireEvent.click(
+    within(card).getByRole("button", { name: "Upload attachment" }),
+  );
+  expect(within(card).getByRole("alert")).toHaveTextContent("non-empty PDF");
+  expect(post).not.toHaveBeenCalled();
+});

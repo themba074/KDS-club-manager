@@ -1,3 +1,4 @@
+import { useConfirmation } from "@/components/ui/use-confirmation";
 import { useState } from "react";
 import { Vote } from "lucide-react";
 import { EmptyState } from "@/components/states/EmptyState";
@@ -21,10 +22,12 @@ function MotionCard({
   canCast: boolean;
 }) {
   const cancel = useCancelMotion();
+  const { confirm, confirmation } = useConfirmation();
   const [editing, setEditing] = useState<Motion | null>(null);
   const canEdit = motion.state === "DRAFT" || motion.state === "CANCELLED";
   return (
     <article className="space-y-3 rounded-xl border bg-card p-4">
+      {confirmation}
       <div className="flex justify-between gap-2">
         <h3 className="font-semibold">{motion.title}</h3>
         <span>{motion.state}</span>
@@ -69,15 +72,20 @@ function MotionCard({
               Edit motion
             </Button>
           )}
-          {motion.state !== "CANCELLED" && (
+          {motion.state !== "CANCELLED" && !motion.resultsPublished && (
             <Button
               type="button"
               variant="outline"
               disabled={cancel.isPending}
               onClick={() =>
-                cancel.mutate(
-                  { id: motion.id, version: motion.version },
-                  { onSuccess: () => setEditing(null) },
+                confirm(
+                  "Cancel this motion",
+                  `Cancel “${motion.title}”? Members will no longer be able to vote on it.`,
+                  () =>
+                    cancel.mutate(
+                      { id: motion.id, version: motion.version },
+                      { onSuccess: () => setEditing(null) },
+                    ),
                 )
               }
             >

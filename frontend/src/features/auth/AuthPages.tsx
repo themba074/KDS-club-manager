@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form"
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom"
+import { Landmark, ShieldCheck, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { errorMessage } from "./auth-api"
@@ -9,7 +10,18 @@ import { useAuthStore } from "./auth-store"
 type Credentials = { email: string; password: string }
 
 function Frame({ title, children }: { title: string; children: React.ReactNode }) {
-  return <main className="grid min-h-screen place-items-center bg-muted p-4"><section className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm"><div className="mb-6"><p className="font-bold text-primary">KDS Club Manager</p><h1 className="mt-2 text-2xl font-semibold">{title}</h1></div>{children}</section></main>
+  return <main className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.95fr)]">
+    <section className="relative hidden overflow-hidden bg-sidebar p-10 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between">
+      <div className="absolute -right-24 -top-20 size-96 rounded-full border border-sidebar-foreground/10" />
+      <div className="absolute -bottom-32 -left-24 size-96 rounded-full border border-sidebar-foreground/10" />
+      <div className="relative flex items-center gap-3"><span className="grid size-12 place-items-center rounded-2xl bg-[#d9ad50] text-sidebar"><Landmark className="size-6" aria-hidden="true" /></span><span><span className="block text-2xl font-semibold tracking-tight">KDS</span><span className="text-sm text-sidebar-foreground/70">Club Manager</span></span></div>
+      <div className="relative max-w-md"><p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#d9ad50]">Club operations, in one place</p><h2 className="mt-5 font-heading text-5xl font-semibold leading-[1.05] tracking-[-0.045em]">Manage together.<br /><span className="text-[#d9ad50]">Move forward.</span></h2><p className="mt-6 text-base leading-7 text-sidebar-foreground/75">Keep your club’s members, meetings, contributions, documents, and decisions connected.</p></div>
+      <div className="relative grid gap-4 text-sm"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#d9ad50]" aria-hidden="true" /><span><strong className="block text-sidebar-foreground">Role-based access</strong><span className="text-sidebar-foreground/70">Members see only what their role allows.</span></span></div><div className="flex items-start gap-3"><UsersRound className="mt-0.5 size-5 shrink-0 text-[#d9ad50]" aria-hidden="true" /><span><strong className="block text-sidebar-foreground">Built for club teams</strong><span className="text-sidebar-foreground/70">Run shared work with clear accountability.</span></span></div></div>
+    </section>
+    <section className="grid place-items-center p-4 sm:p-8">
+      <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-[0_16px_40px_oklch(0.22_0.03_160/10%)] sm:p-8"><div className="mb-8"><div className="mb-6 flex items-center gap-2 lg:hidden"><span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground"><Landmark className="size-5" aria-hidden="true" /></span><span className="font-semibold text-primary">KDS Club Manager</span></div><p className="text-sm font-medium text-primary">Secure club access</p><h1 className="mt-2 font-heading text-3xl font-semibold tracking-[-0.035em]">{title}</h1></div>{children}</div>
+    </section>
+  </main>
 }
 
 export function CredentialsPage({ mode }: { mode: "login" | "register" }) {

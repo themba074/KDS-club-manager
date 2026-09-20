@@ -1,3 +1,4 @@
+import { useConfirmation } from "@/components/ui/use-confirmation";
 import { Button } from "@/components/ui/button";
 import { errorMessage } from "@/features/auth/auth-api";
 import {
@@ -16,6 +17,7 @@ export function MotionResults({
   const visible = motion.resultsPublished || canPublish;
   const results = useMotionResults(motion.id, visible);
   const publish = usePublishMotionResults(motion.id);
+  const { confirm, confirmation } = useConfirmation();
 
   if (!visible) return <p>Results will be available after publication.</p>;
   if (results.isPending) return <p role="status">Loading results…</p>;
@@ -27,6 +29,7 @@ export function MotionResults({
   );
   return (
     <section className="space-y-2 rounded-lg border p-3">
+      {confirmation}
       <h4 className="font-semibold">
         {results.data.published ? "Published results" : "Result preview"}
       </h4>
@@ -62,7 +65,13 @@ export function MotionResults({
           <Button
             type="button"
             disabled={publish.isPending}
-            onClick={() => publish.mutate(motion.version)}
+            onClick={() =>
+              confirm(
+                "Publish final results",
+                `Publish results for “${motion.title}”? This permanently freezes the result and makes it available to members.`,
+                () => publish.mutate(motion.version),
+              )
+            }
           >
             {publish.isPending ? "Publishing…" : "Publish results"}
           </Button>

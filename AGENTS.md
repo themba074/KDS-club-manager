@@ -63,11 +63,12 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#20 are merged on `main`.
+- The planned sequence #0–#21 is complete (including foundation #0).
 
 ## Current Build Status
-- Phase: Pilot readiness — Feature 21 onboarding polish is in progress on
-  `feature/pilot-onboarding-polish`.
+- Phase: Post-feature quality review and pilot readiness. All planned features
+  through #21 are complete, confirmed by the team on 2026-09-20. Deployment
+  infrastructure completion does not imply staging is configured or live.
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -144,10 +145,12 @@ either of you can pick up the other's feature if it makes sense.
   review covering repositories, controllers, authentication, storage,
   runtime configuration, and container boundaries. Open findings remain
   tracked in `docs/SECURITY_REVIEW_FEATURE_19.md`.
-- Landed on `main`: #20 — production-shaped containers, fail-closed staging
+- Completed: #20 — production-shaped containers, fail-closed staging
   configuration, and automatic staging deployment after `main` passes CI.
-- In progress: #21 — permission-aware pilot onboarding, consistent empty
-  states, and clear user-facing errors across the frontend.
+- Completed: #21 — pilot onboarding polish.
+- Ongoing: usability, validation, regression testing, and pilot feedback.
+  Open security findings remain tracked separately; feature completion does
+  not close them automatically.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack

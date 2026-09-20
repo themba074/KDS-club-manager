@@ -1,81 +1,229 @@
-import { Search, Upload, UserRoundPlus, Users } from "lucide-react"
-import { useState } from "react"
+import { useConfirmation } from "@/components/ui/use-confirmation";
+import { Search, Upload, UserRoundPlus, Users } from "lucide-react";
+import { useState } from "react";
 
-import { EmptyState } from "@/components/states/EmptyState"
-import { LoadingState } from "@/components/states/LoadingState"
-import { ErrorState } from "@/components/states/ErrorState"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { errorMessage } from "@/features/auth/auth-api"
-import { usePermission } from "@/features/roles/use-permission"
-import { InviteMemberForm } from "./InviteMemberForm"
-import { BulkMemberImport } from "./BulkMemberImport"
-import { useChangeMemberStatus, useMembers, type MemberStatus } from "./member-hooks"
+import { EmptyState } from "@/components/states/EmptyState";
+import { LoadingState } from "@/components/states/LoadingState";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { errorMessage } from "@/features/auth/auth-api";
+import { usePermission } from "@/features/roles/use-permission";
+import { InviteMemberForm } from "./InviteMemberForm";
+import { BulkMemberImport } from "./BulkMemberImport";
+import {
+  useChangeMemberStatus,
+  useMembers,
+  type MemberStatus,
+} from "./member-hooks";
 
 const statusLabels: Record<MemberStatus, string> = {
-  ACTIVE: "Active", INVITED: "Invited", SUSPENDED: "Suspended", EXITED: "Exited",
-}
+  ACTIVE: "Active",
+  INVITED: "Invited",
+  SUSPENDED: "Suspended",
+  EXITED: "Exited",
+};
 
 export function MemberDirectory() {
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<MemberStatus | "ALL">("ALL")
-  const [showInvitation, setShowInvitation] = useState(false)
-  const [showImport, setShowImport] = useState(false)
-  const members = useMembers(search, status)
-  const canInvite = usePermission("MEMBERS_WRITE")
-  const statusChange = useChangeMemberStatus()
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<MemberStatus | "ALL">("ALL");
+  const [showInvitation, setShowInvitation] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const members = useMembers(search, status);
+  const canInvite = usePermission("MEMBERS_WRITE");
+  const statusChange = useChangeMemberStatus();
+  const { confirm, confirmation } = useConfirmation();
 
-  return <section className="space-y-6">
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div><h1 className="text-2xl font-semibold">Members</h1>
-        <p className="mt-2 text-muted-foreground">View active members and invitations awaiting acceptance.</p></div>
-      {canInvite && <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => setShowImport((visible) => !visible)}>
-          <Upload aria-hidden="true" />{showImport ? "Close bulk import" : "Bulk import"}
-        </Button>
-        <Button onClick={() => setShowInvitation((visible) => !visible)}>
-          <UserRoundPlus aria-hidden="true" />{showInvitation ? "Close invite form" : "Invite member"}
-        </Button>
-      </div>}
-    </header>
-    {showInvitation && canInvite && <InviteMemberForm />}
-    {showImport && canInvite && <BulkMemberImport />}
-    <div className="flex flex-col gap-3 sm:flex-row">
-      <label className="relative flex-1"><span className="sr-only">Search members</span>
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-        <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name, email, or phone" />
-      </label>
-      <label><span className="sr-only">Filter by status</span>
-        <select className="h-9 rounded-lg border bg-background px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value as MemberStatus | "ALL")}>
-          <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="INVITED">Invited</option><option value="SUSPENDED">Suspended</option><option value="EXITED">Exited</option>
-        </select>
-      </label>
-    </div>
-    {members.isPending && <LoadingState label="Loading member directory" />}
-    {members.error && <ErrorState title="We couldn't load the member directory" description={errorMessage(members.error, "Try loading the member list again.")} onRetry={() => void members.refetch()}/>}
-    {members.data?.length === 0 && <EmptyState icon={Users} title={search || status !== "ALL" ? "No members match these filters" : "Your member directory is ready to grow"} description={search || status !== "ALL" ? "Try changing your search or status filter." : canInvite ? "Invite one person or use bulk import to start building your club directory." : "An administrator can invite members to this club."} action={search || status !== "ALL" ? <Button variant="outline" onClick={() => { setSearch(""); setStatus("ALL") }}>Clear filters</Button> : canInvite ? <Button onClick={() => setShowInvitation(true)}>Invite the first member</Button> : undefined} />}
-    {members.data && members.data.length > 0 && <div className="rounded-xl border bg-card">
-      {statusChange.error && <p role="alert" className="border-b p-3 text-sm text-destructive">{errorMessage(statusChange.error)}</p>}
-      <Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead>{canInvite && <TableHead>Change status</TableHead>}</TableRow></TableHeader>
-        <TableBody>{members.data.map((member) => <TableRow key={`${member.status}-${member.id}`}>
-          <TableCell className="font-medium">{[member.firstName, member.lastName].filter(Boolean).join(" ") || "Not provided"}</TableCell>
-          <TableCell>{member.email}</TableCell><TableCell>{member.phone || "—"}</TableCell>
-          <TableCell>{member.roleCode.charAt(0) + member.roleCode.slice(1).toLowerCase()}</TableCell>
-          <TableCell><span className={member.status === "ACTIVE" ? "rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary" : member.status === "SUSPENDED" ? "rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-700" : "rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"}>{statusLabels[member.status]}</span></TableCell>
-          {canInvite && <TableCell>{member.status === "INVITED" || member.status === "EXITED" ? "—" : <label>
-            <span className="sr-only">Change status for {member.email}</span>
-            <select className="h-8 rounded-lg border bg-background px-2 text-sm" value="" disabled={statusChange.isPending} onChange={(event) => {
-              const nextStatus = event.target.value as "ACTIVE" | "SUSPENDED" | "EXITED"
-              if (nextStatus) statusChange.mutate({ membershipId: member.id, status: nextStatus })
-            }}>
-              <option value="">Choose…</option>
-              {member.status === "SUSPENDED" && <option value="ACTIVE">Reactivate</option>}
-              {member.status === "ACTIVE" && <option value="SUSPENDED">Suspend</option>}
-              <option value="EXITED">Mark exited</option>
-            </select>
-          </label>}</TableCell>}
-        </TableRow>)}</TableBody></Table>
-    </div>}
-  </section>
+  return (
+    <section className="space-y-7">
+      {confirmation}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-primary">Club directory</p>
+          <h1 className="mt-1 font-heading text-3xl font-semibold tracking-[-0.035em]">
+            Members
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+            View members across all statuses and invitations awaiting
+            acceptance.
+          </p>
+        </div>
+        {canInvite && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowImport((visible) => !visible)}
+            >
+              <Upload aria-hidden="true" />
+              {showImport ? "Close bulk import" : "Bulk import"}
+            </Button>
+            <Button onClick={() => setShowInvitation((visible) => !visible)}>
+              <UserRoundPlus aria-hidden="true" />
+              {showInvitation ? "Close invite form" : "Invite member"}
+            </Button>
+          </div>
+        )}
+      </header>
+      {showInvitation && canInvite && <InviteMemberForm />}
+      {showImport && canInvite && <BulkMemberImport />}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/75 bg-card p-3 shadow-[0_1px_2px_oklch(0.2_0.03_160/4%)] sm:flex-row">
+        <label className="relative flex-1">
+          <span className="sr-only">Search members</span>
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            className="pl-9"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name, email, or phone"
+          />
+        </label>
+        <label>
+          <span className="sr-only">Filter by status</span>
+          <select
+            className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+            value={status}
+            onChange={(event) =>
+              setStatus(event.target.value as MemberStatus | "ALL")
+            }
+          >
+            <option value="ALL">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INVITED">Invited</option>
+            <option value="SUSPENDED">Suspended</option>
+            <option value="EXITED">Exited</option>
+          </select>
+        </label>
+      </div>
+      {members.isPending && <LoadingState label="Loading member directory" />}
+      {members.error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/30 p-4"
+        >
+          <p>{errorMessage(members.error)}</p>
+          <Button
+            className="mt-3"
+            variant="outline"
+            onClick={() => void members.refetch()}
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+      {members.data?.length === 0 && (
+        <EmptyState
+          icon={Users}
+          title="No matching members"
+          description={
+            search || status !== "ALL"
+              ? "Try changing your search or status filter."
+              : "Invite someone to start building your club directory."
+          }
+        />
+      )}
+      {members.data && members.data.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-border/75 bg-card shadow-[0_1px_2px_oklch(0.2_0.03_160/4%)]">
+          {statusChange.error && (
+            <p role="alert" className="border-b p-3 text-sm text-destructive">
+              {errorMessage(statusChange.error)}
+            </p>
+          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                {canInvite && <TableHead>Change status</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.data.map((member) => (
+                <TableRow key={`${member.status}-${member.id}`}>
+                  <TableCell className="font-medium">
+                    {[member.firstName, member.lastName]
+                      .filter(Boolean)
+                      .join(" ") || "Not provided"}
+                  </TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>{member.phone || "—"}</TableCell>
+                  <TableCell>
+                    {member.roleCode.charAt(0) +
+                      member.roleCode.slice(1).toLowerCase()}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        member.status === "ACTIVE"
+                          ? "rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                          : member.status === "SUSPENDED"
+                            ? "rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-700"
+                            : "rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                      }
+                    >
+                      {statusLabels[member.status]}
+                    </span>
+                  </TableCell>
+                  {canInvite && (
+                    <TableCell>
+                      {member.status === "INVITED" ||
+                      member.status === "EXITED" ? (
+                        "—"
+                      ) : (
+                        <label>
+                          <span className="sr-only">
+                            Change status for {member.email}
+                          </span>
+                          <select
+                            className="h-8 rounded-lg border bg-background px-2 text-sm"
+                            value=""
+                            disabled={statusChange.isPending}
+                            onChange={(event) => {
+                              const nextStatus = event.target.value as
+                                "ACTIVE" | "SUSPENDED" | "EXITED";
+                              if (nextStatus)
+                                confirm(
+                                  "Confirm membership status",
+                                  `Change ${member.email} to ${statusLabels[nextStatus].toLowerCase()}? ${nextStatus === "ACTIVE" ? "This restores access to the club." : nextStatus === "EXITED" ? "This immediately revokes club access. Exited memberships cannot be reactivated here." : "This immediately revokes club access until reactivated."}`,
+                                  () =>
+                                    statusChange.mutate({
+                                      membershipId: member.id,
+                                      status: nextStatus,
+                                    }),
+                                );
+                            }}
+                          >
+                            <option value="">Choose…</option>
+                            {member.status === "SUSPENDED" && (
+                              <option value="ACTIVE">Reactivate</option>
+                            )}
+                            {member.status === "ACTIVE" && (
+                              <option value="SUSPENDED">Suspend</option>
+                            )}
+                            <option value="EXITED">Mark exited</option>
+                          </select>
+                        </label>
+                      )}
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </section>
+  );
 }
