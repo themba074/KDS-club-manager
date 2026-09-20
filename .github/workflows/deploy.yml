@@ -1,0 +1,141 @@
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish immutable images
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    outputs:
+      backend_image: ${{ steps.images.outputs.backend }}
+      frontend_image: ${{ steps.images.outputs.frontend }}
+    steps:
+      - name: Check out the verified revision
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Resolve immutable image names
+        id: images
+        shell: bash
+        run: |
+          repository="$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          tag="${{ github.event.workflow_run.head_sha }}"
+          echo "backend=ghcr.io/${repository}/backend:${tag}" >> "$GITHUB_OUTPUT"
+          echo "frontend=ghcr.io/${repository}/frontend:${tag}" >> "$GITHUB_OUTPUT"
+          echo "backend_staging=ghcr.io/${repository}/backend:staging" >> "$GITHUB_OUTPUT"
+          echo "frontend_staging=ghcr.io/${repository}/frontend:staging" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and publish backend
+        env:
+          IMMUTABLE_IMAGE: ${{ steps.images.outputs.backend }}
+          STAGING_IMAGE: ${{ steps.images.outputs.backend_staging }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          docker build --build-arg APP_VERSION="$DEPLOY_SHA" --build-arg VCS_REF="$DEPLOY_SHA" --tag "$IMMUTABLE_IMAGE" --tag "$STAGING_IMAGE" backend
+          docker push "$IMMUTABLE_IMAGE"
+          docker push "$STAGING_IMAGE"
+
+      - name: Build and publish frontend
+        env:
+          IMMUTABLE_IMAGE: ${{ steps.images.outputs.frontend }}
+          STAGING_IMAGE: ${{ steps.images.outputs.frontend_staging }}
+          DEPLOY_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          docker build --build-arg APP_VERSION="$DEPLOY_SHA" --build-arg VCS_REF="$DEPLOY_SHA" --tag "$IMMUTABLE_IMAGE" --tag "$STAGING_IMAGE" frontend
+          docker push "$IMMUTABLE_IMAGE"
+          docker push "$STAGING_IMAGE"
+
+  deploy:
+    name: Deploy verified images
+    needs: publish
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    env:
+      BACKEND_IMAGE: ${{ needs.publish.outputs.backend_image }}
+      FRONTEND_IMAGE: ${{ needs.publish.outputs.frontend_image }}
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_PORT: ${{ vars.STAGING_PORT }}
+      STAGING_USER: ${{ vars.STAGING_USER }}
+      STAGING_DEPLOY_PATH: ${{ vars.STAGING_DEPLOY_PATH }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Check out the verified revision
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Validate deployment settings
+        shell: bash
+        run: |
+          : "${STAGING_HOST:?Configure the STAGING_HOST environment variable}"
+          : "${STAGING_PORT:?Configure the STAGING_PORT environment variable}"
+          : "${STAGING_USER:?Configure the STAGING_USER environment variable}"
+          : "${STAGING_DEPLOY_PATH:?Configure the STAGING_DEPLOY_PATH environment variable}"
+          : "${STAGING_URL:?Configure the STAGING_URL environment variable}"
+          [[ "$STAGING_HOST" =~ ^[A-Za-z0-9._-]+$ ]]
+          [[ "$STAGING_PORT" =~ ^[0-9]+$ ]]
+          [[ "$STAGING_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
+          [[ "$STAGING_DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+          [[ "$STAGING_URL" =~ ^https:// ]]
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          : "${SSH_PRIVATE_KEY:?Configure the STAGING_SSH_PRIVATE_KEY environment secret}"
+          : "${SSH_KNOWN_HOSTS:?Configure the STAGING_SSH_KNOWN_HOSTS environment secret}"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+
+      - name: Copy the staging manifest
+        shell: bash
+        run: |
+          target="${STAGING_USER}@${STAGING_HOST}"
+          ssh -p "$STAGING_PORT" "$target" "mkdir -p '$STAGING_DEPLOY_PATH'"
+          scp -P "$STAGING_PORT" docker-compose.staging.yml "$target:$STAGING_DEPLOY_PATH/docker-compose.staging.yml"
+
+      - name: Pull and start the verified revision
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          target="${STAGING_USER}@${STAGING_HOST}"
+          printf '%s' "$GHCR_TOKEN" | ssh -p "$STAGING_PORT" "$target" "docker login ghcr.io --username '$GITHUB_ACTOR' --password-stdin"
+          ssh -p "$STAGING_PORT" "$target" "cd '$STAGING_DEPLOY_PATH' && BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' docker compose --env-file .env.staging -f docker-compose.staging.yml config --quiet && BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' docker compose --env-file .env.staging -f docker-compose.staging.yml up -d --pull always --remove-orphans --wait --wait-timeout 180"
+
+      - name: Remove the temporary registry session
+        if: always()
+        shell: bash
+        run: |
+          target="${STAGING_USER}@${STAGING_HOST}"
+          ssh -p "$STAGING_PORT" "$target" "docker logout ghcr.io"
+
+      - name: Verify the public staging endpoint
+        run: curl --fail --show-error --silent --retry 12 --retry-delay 5 --max-time 10 "${STAGING_URL%/}/healthz"

@@ -323,6 +323,17 @@ creates one authorized tenant-scoped snapshot and renders it as CSV or PDF.
 CSV output neutralizes spreadsheet formulas, PDFs paginate, and no report data
 or temporary files are persisted.
 
+## Staging deployment (Feature 20)
+
+Successful `main` CI runs publish non-root backend and frontend images to
+GitHub Container Registry with immutable commit-SHA tags, then deploy those
+exact images to the configured Linux staging host. Staging configuration fails
+closed when required secrets or production delivery providers are missing.
+
+See [docs/STAGING_DEPLOYMENT.md](docs/STAGING_DEPLOYMENT.md) for the one-time
+host, database, storage, SMTP, TLS, GitHub environment, verification, and
+rollback setup.
+
 ## Run checks without Docker
 
 Backend (Java 21):
@@ -342,5 +353,6 @@ npm run test:run -- --maxWorkers=1
 npm run build
 ```
 
-The GitHub Actions workflow runs the same backend and frontend checks for pull
-requests and pushes to `main`.
+The GitHub Actions workflow runs the same backend and frontend checks plus
+staging Compose validation and production-image builds for pull requests and
+pushes to `main`.

@@ -11,3 +11,6 @@ frontend/dist/
 
 # Environment variables
 .env
+.env.*
+!.env.example
+!.env.*.example
