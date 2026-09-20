@@ -1,6 +1,6 @@
 # Feature 19 Security and Tenant-Isolation Review
 
-Status: audit merged; remaining findings tracked below
+Status: findings awaiting team review  
 Branch: `feature/security-review`  
 Baseline reviewed: `main` at `3903b74`
 
@@ -13,10 +13,10 @@ This review traced each HTTP endpoint through its application service and reposi
 | ID | Severity | Status | Finding | Evidence and risk | Recommended disposition |
 |---|---|---|---|---|---|
 | SEC-19-01 | High | Review required | Public authentication and invitation endpoints have no abuse throttling. | `FoundationSecurityConfiguration` permits register, login, refresh, logout, password-reset request/confirm, and invitation acceptance. There is no rate-limiter dependency, filter, service, or test. Attackers can make unrestricted credential-stuffing, account-creation, reset-token guessing, and invitation-token guessing attempts. | Add application-level limits keyed by source IP plus normalized account identifier where available, return `429` with a generic response, and add integration tests. Preserve a deployment-layer limit as an additional control, not the only control. |
-| SEC-19-02 | High | Fixed in Feature 20 | The default Compose path is development-friendly but does not fail closed for non-local deployment. | `docker-compose.yml` supplies a repository-known JWT signing secret and database password, enables raw reset/invitation token delivery, uses an insecure refresh cookie, and serves plain HTTP unless every relevant variable is overridden. Reusing this Compose file for staging would allow token forgery and expose credential links in logs. | Feature 20 adds a separate required-variable staging Compose file, a staging Spring profile, and startup validation that rejects development credentials and delivery settings. |
+| SEC-19-02 | High | Review required | The default Compose path is development-friendly but does not fail closed for non-local deployment. | `docker-compose.yml` supplies a repository-known JWT signing secret and database password, enables raw reset/invitation token delivery, uses an insecure refresh cookie, and serves plain HTTP unless every relevant variable is overridden. Reusing this Compose file for staging would allow token forgery and expose credential links in logs. | Keep convenient local defaults in an explicit development profile. Add a production/staging profile that requires injected secrets, secure cookies and real delivery providers, and fails startup when development delivery or known defaults are active. Coordinate the deployment-specific part with Feature 20. |
 | SEC-19-03 | Medium | Review required | Several tenant-owned repository writes do not enforce tenant ownership at the repository boundary. | `VoteRepository.add`, `MotionResultRepository.addAll`, and `MemberRepository.saveInvitation` persist a caller-supplied `clubId` without comparing it with the current tenant. `MemberRepository.saveProfile` is used by the secret-authorized public invitation flow and has no explicit expected-club guard. Current services construct the entities safely, so no present cross-tenant exploit was found, but a future caller mistake could persist data into another tenant. | Add the standard `TenantContext` guard to request-scoped writes. For public invitation acceptance, require the validated invitation's club ID explicitly and document that secret-validation boundary. Add negative repository/service tests. |
 | SEC-19-04 | Low | Review required | Registration reveals whether an email address already has an account. | `AuthService.register` raises `EmailAlreadyRegisteredException`; `ApiExceptionHandler` returns a distinct `409` and message. Login and password-reset request correctly use generic responses. Enumeration can support targeted phishing or credential attacks. | Decide whether the current user experience is worth the disclosure. Prefer a generic registration response or an email-based existing-account flow; at minimum, cover it with SEC-19-01 throttling. |
-| SEC-19-05 | Low | Fixed in Feature 20 | The Nginx frontend has no browser hardening headers. | `frontend/nginx.conf` does not set a Content Security Policy, clickjacking protection, MIME-sniffing protection, referrer policy, or permissions policy. This does not create an observed tenant bypass, but weakens defense in depth against browser-side attacks. | Feature 20 adds CSP, clickjacking, MIME-sniffing, referrer, and permissions headers. HSTS remains at the public TLS terminator so local HTTP stays usable. |
+| SEC-19-05 | Low | Review required | The Nginx frontend has no browser hardening headers. | `frontend/nginx.conf` does not set a Content Security Policy, clickjacking protection, MIME-sniffing protection, referrer policy, or permissions policy. This does not create an observed tenant bypass, but weakens defense in depth against browser-side attacks. | Add a tested header policy. Enable HSTS only at the TLS-terminating production layer so local HTTP remains usable. This can be completed with Feature 20 if explicitly deferred here. |
 
 ## Repository tenant-scope inventory
 
@@ -81,12 +81,12 @@ All 17 controllers and their mapped endpoints were reviewed. Tenant requests pas
 
 ## Decision log
 
-Record one of `Fixed in <feature/PR>`, `Accepted`, or `Deferred to <feature/issue>` for every finding before the review is closed.
+Record one of `Fix in Feature 19`, `Accepted`, or `Deferred to <feature/issue>` for every finding before Feature 19 is marked complete.
 
 | Finding | Decision | Owner/link | Notes |
 |---|---|---|---|
 | SEC-19-01 | Pending | | |
-| SEC-19-02 | Fix in Feature 20 | `application-staging.properties`, `StagingConfigurationValidator`, `docker-compose.staging.yml` | Staging now requires injected secrets, HTTPS origins, secure cookies, SMTP delivery, and Supabase storage. |
+| SEC-19-02 | Pending | | |
 | SEC-19-03 | Pending | | |
 | SEC-19-04 | Pending | | |
-| SEC-19-05 | Fix in Feature 20 | `frontend/nginx.conf`, `docs/STAGING_DEPLOYMENT.md` | Browser headers are emitted by the app proxy; HSTS is documented at the TLS terminator. |
+| SEC-19-05 | Pending | | |
