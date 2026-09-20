@@ -1,6 +1,6 @@
 import axios, { AxiosHeaders, type AxiosResponse } from "axios"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { api, refreshSession, type AuthResponse } from "./auth-api"
+import { api, errorMessage, refreshSession, type AuthResponse } from "./auth-api"
 import { useAuthStore, type ClubSummary } from "./auth-store"
 
 const originalAdapter = api.defaults.adapter
@@ -43,5 +43,24 @@ describe("tenant session transport", () => {
     expect(calls).toBe(1)
     expect(useAuthStore.getState().activeClub).toEqual(club)
     expect(useAuthStore.getState().accessToken).toBe("renewed")
+  })
+})
+
+describe("user-facing API errors", () => {
+  const failure = (status: number, detail?: string) => new axios.AxiosError("Request failed", undefined, undefined, undefined, {
+    data: detail ? { detail } : {}, status, statusText: "Error", headers: {}, config: { headers: new AxiosHeaders() },
+  })
+
+  it("keeps concise client-safe problem details", () => {
+    expect(errorMessage(failure(400, "A contribution amount must be positive."))).toBe("A contribution amount must be positive.")
+  })
+
+  it("replaces server failures and stack traces with actionable messages", () => {
+    expect(errorMessage(failure(500, "java.lang.IllegalStateException: secret\n at service.save(Service.java:42)"))).toBe("The service is temporarily unavailable. Please try again shortly.")
+    expect(errorMessage(failure(403))).toBe("You do not have permission to perform this action.")
+  })
+
+  it("uses the supplied context when the failure is unknown", () => {
+    expect(errorMessage(new Error("internal details"), "We couldn't save the meeting. Try again.")).toBe("We couldn't save the meeting. Try again.")
   })
 })

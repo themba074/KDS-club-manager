@@ -446,11 +446,11 @@ it("shows loading, retryable list errors, and an empty state", async () => {
   page();
   expect(screen.getByRole("status")).toHaveTextContent("Loading motions");
   expect(
-    await screen.findByRole("button", { name: "Retry motions" }),
+    await screen.findByRole("button", { name: "Try again" }),
   ).toBeInTheDocument();
   get.mockResolvedValue({ data: [] });
-  fireEvent.click(screen.getByRole("button", { name: "Retry motions" }));
-  expect(await screen.findByText("No motions yet.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(await screen.findByText("No motions yet")).toBeInTheDocument();
 });
 
 it("reports member-loading errors when selecting voters", async () => {
@@ -499,7 +499,7 @@ it("uses a new query and clears the create form when switching clubs", async () 
       activeClub: { ...state.activeClub!, id: "club-2" },
     })),
   );
-  expect(await screen.findByText("No motions yet.")).toBeInTheDocument();
+  expect(await screen.findByText("No motions yet")).toBeInTheDocument();
   expect(screen.queryByText("Approve budget")).not.toBeInTheDocument();
   expect(screen.getByLabelText("Title")).toHaveValue("");
   expect(client.getQueryData(["motions", "club-2"])).toEqual([]);
