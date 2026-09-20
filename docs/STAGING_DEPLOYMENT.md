@@ -15,9 +15,14 @@ are never copied into either image.
    CI run. It checks out that run's immutable commit SHA.
 4. Backend and frontend images are published to GHCR with both the commit SHA
    and the moving `staging` tag. Deployment always uses the SHA tags.
-5. The workflow copies `docker-compose.staging.yml` to the host, validates it,
-   starts the verified images, waits for container health checks, and calls
-   the public `/healthz` endpoint.
+5. When the repository variable `STAGING_ENABLED` is `true`, the workflow
+   copies `docker-compose.staging.yml` to the host, validates it, starts the
+   verified images, waits for container health checks, and calls the public
+   `/healthz` endpoint.
+
+Until staging infrastructure is ready, leave `STAGING_ENABLED` unset or set it
+to `false`. Successful `main` builds still publish immutable images, while the
+deployment job is skipped cleanly instead of failing on missing host settings.
 
 The moving tags are convenient for inspection. They are not used as the
 deployment source of truth and should not be used for rollback.
@@ -56,6 +61,10 @@ Compose also refuses to render when a required value is missing.
 
 ## GitHub staging environment
 
+Create a repository Actions variable named `STAGING_ENABLED` and initially set
+it to `false`. This gate is repository-scoped because GitHub evaluates the job
+condition before environment-scoped variables and secrets are made available.
+
 Create a GitHub environment named `staging`. Automatic deployment requires it
 not to have a required-reviewer gate. Configure these environment variables:
 
@@ -78,7 +87,13 @@ Generate the `known_hosts` entry during setup with `ssh-keyscan`, then verify
 its fingerprint through the hosting provider's console before saving it. Do
 not disable SSH host-key checking. The workflow uses its short-lived
 `GITHUB_TOKEN` to pull private GHCR images and logs the host out after each
-deployment.
+deployment. Registry logout is best-effort cleanup and cannot replace the
+primary deployment error if the host becomes unreachable.
+
+After the host, environment variables, secrets, `.env.staging`, DNS, and TLS
+endpoint have all been verified, change the repository variable
+`STAGING_ENABLED` to `true`. The next successful CI run for a `main` push will
+deploy automatically.
 
 ## Manual verification
 
