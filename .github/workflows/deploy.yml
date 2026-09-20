@@ -69,6 +69,7 @@ jobs:
   deploy:
     name: Deploy verified images
     needs: publish
+    if: vars.STAGING_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment:
       name: staging
@@ -102,6 +103,7 @@ jobs:
           [[ "$STAGING_URL" =~ ^https:// ]]
 
       - name: Configure SSH
+        id: configure_ssh
         env:
           SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
@@ -131,7 +133,8 @@ jobs:
           ssh -p "$STAGING_PORT" "$target" "cd '$STAGING_DEPLOY_PATH' && BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' docker compose --env-file .env.staging -f docker-compose.staging.yml config --quiet && BACKEND_IMAGE='$BACKEND_IMAGE' FRONTEND_IMAGE='$FRONTEND_IMAGE' docker compose --env-file .env.staging -f docker-compose.staging.yml up -d --pull always --remove-orphans --wait --wait-timeout 180"
 
       - name: Remove the temporary registry session
-        if: always()
+        if: ${{ always() && steps.configure_ssh.outcome == 'success' }}
+        continue-on-error: true
         shell: bash
         run: |
           target="${STAGING_USER}@${STAGING_HOST}"
