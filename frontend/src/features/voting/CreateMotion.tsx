@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/features/auth/auth-api";
 import { useMembers } from "@/features/members/member-hooks";
+import { EmptyState } from "@/components/states/EmptyState";
+import { ErrorState } from "@/components/states/ErrorState";
+import { UsersRound } from "lucide-react";
 import { useSaveMotion, type Motion } from "./motion-hooks";
 
 type Form = {
@@ -201,8 +204,8 @@ export function CreateMotion({
           <fieldset>
             <legend>Select eligible members</legend>
             {members.isPending && <p role="status">Loading members…</p>}
-            {members.error && <p role="alert">{errorMessage(members.error)}</p>}
-            {members.data?.length === 0 && <p>No active members available.</p>}
+            {members.error && <ErrorState title="We couldn't load eligible members" description={errorMessage(members.error, "Try loading the active member list again.")} onRetry={() => void members.refetch()} />}
+            {members.data?.length === 0 && <EmptyState icon={UsersRound} title="No active members can be selected" description="Invite or reactivate members before creating a motion for a selected group." />}
             {members.data?.map((member) => (
               <label className="block" key={member.id}>
                 <input

@@ -1,6 +1,9 @@
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { errorMessage } from "@/features/auth/auth-api"
+import { EmptyState } from "@/components/states/EmptyState"
+import { ErrorState } from "@/components/states/ErrorState"
+import { Building2 } from "lucide-react"
 import { useClubs, useSelectClub, useClubContext, useClubTypes } from "./club-hooks"
 import { CreateClubWizard } from "./CreateClubWizard"
 
@@ -18,8 +21,8 @@ export function ClubWorkspacePage() {
       {activeClub && <Link className="mt-3 inline-block underline" to="/">Return to {activeClub.name}</Link>}
     </header>
     {clubs.isPending && <p role="status">Loading your clubs…</p>}
-    {clubs.error && <div role="alert"><p>{errorMessage(clubs.error)}</p><Button type="button" onClick={() => void clubs.refetch()}>Retry</Button></div>}
-    {clubs.data?.length === 0 && <p>You do not belong to any clubs yet. Create one below to get started.</p>}
+    {clubs.error && <ErrorState title="We couldn't load your clubs" description={errorMessage(clubs.error, "Try loading your club list again.")} onRetry={() => void clubs.refetch()}/>}
+    {clubs.data?.length === 0 && <EmptyState icon={Building2} title="You don't belong to a club yet" description="Create your first club below, or ask a club administrator to send you an invitation."/>}
     <ul className="space-y-3">{clubs.data?.map((club) => <li key={club.id} className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
       <div><h2 className="font-semibold">{club.name}</h2><p className="text-sm text-muted-foreground">{clubTypes.data?.find((type) => type.code === club.clubType)?.name ?? club.clubType} · {club.administrator ? "Administrator" : "Member"}</p></div>
       <Button type="button" disabled={selection.isPending} onClick={() => select(club.id)}>{selection.isPending ? "Switching…" : "Open club"}</Button>
