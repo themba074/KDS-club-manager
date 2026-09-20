@@ -77,6 +77,30 @@ api.interceptors.response.use((response) => {
   }
 })
 
-export function errorMessage(error: unknown) {
-  return axios.isAxiosError<Problem>(error) ? error.response?.data.detail ?? "Something went wrong." : "Something went wrong."
+const statusMessages: Record<number, string> = {
+  400: "Check the information you entered and try again.",
+  401: "Your session has expired. Sign in again to continue.",
+  403: "You do not have permission to perform this action.",
+  404: "The requested information could not be found.",
+  409: "This information changed while you were working. Refresh and try again.",
+  413: "That file is too large. Choose a smaller file and try again.",
+  429: "There have been too many attempts. Wait a moment and try again.",
+}
+
+function safeProblemDetail(detail: unknown) {
+  if (typeof detail !== "string") return null
+  const value = detail.trim()
+  if (!value || value.length > 240 || /[\r\n]|exception|stack trace|\bat\s+[\w.$]+\(/i.test(value)) return null
+  return value
+}
+
+export function errorMessage(error: unknown, fallback = "We couldn't complete that request. Please try again.") {
+  if (!axios.isAxiosError<Problem>(error)) return fallback
+  const status = error.response?.status
+  const detail = status && status < 500 ? safeProblemDetail(error.response?.data.detail) : null
+  if (detail) return detail
+  if (status && statusMessages[status]) return statusMessages[status]
+  if (status && status >= 500) return "The service is temporarily unavailable. Please try again shortly."
+  if (!error.response) return "We couldn't reach the service. Check your connection and try again."
+  return fallback
 }

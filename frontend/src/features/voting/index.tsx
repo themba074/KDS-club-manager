@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Vote } from "lucide-react";
+import { EmptyState } from "@/components/states/EmptyState";
+import { ErrorState } from "@/components/states/ErrorState";
 import { usePermission } from "@/features/roles/use-permission";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { errorMessage } from "@/features/auth/auth-api";
@@ -109,20 +111,11 @@ export function VotingPage() {
       {canCreate && <CreateMotion key={clubId} />}
       {motions.isPending && <p role="status">Loading motions…</p>}
       {motions.error && (
-        <div role="alert">
-          <p>{errorMessage(motions.error)}</p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void motions.refetch()}
-          >
-            Retry motions
-          </Button>
-        </div>
+        <ErrorState title="We couldn't load club motions" description={errorMessage(motions.error, "Try loading the voting list again.")} onRetry={() => void motions.refetch()} />
       )}
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Motions</h2>
-        {motions.data?.length === 0 && <p>No motions yet.</p>}
+        {motions.data?.length === 0 && <EmptyState icon={Vote} title="No motions yet" description={canCreate?"Use the form above when the club needs to discuss and vote on a decision.":"When an authorised member creates a motion, it will appear here."} />}
         {motions.data?.map((motion) => (
           <MotionCard
             key={`${clubId}:${motion.id}`}

@@ -3,6 +3,9 @@ import { useForm,useWatch } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { errorMessage } from "@/features/auth/auth-api"
+import { EmptyState } from "@/components/states/EmptyState"
+import { ErrorState } from "@/components/states/ErrorState"
+import { UsersRound } from "lucide-react"
 import { useAssignableMembers,useSaveSchedule,type ContributionSchedule,type ScheduleInput } from "./schedule-hooks"
 function localDate(offset=0){const date=new Date();date.setDate(date.getDate()+offset);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`}
 function dayAfter(value:string){const [year,month,day]=value.split("-").map(Number);const date=new Date(year,month-1,day+1);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`}
@@ -26,8 +29,8 @@ export function ScheduleForm({editing,onSaved,onCancel}:{editing:ContributionSch
       <label>Assign to<select className="block w-full rounded-lg border bg-background p-2" {...register("assignmentMode")}><option value="ALL_CURRENT">All currently active members</option><option value="SELECTED">Selected active members</option></select></label>
     </div>
     {mode==="SELECTED"&&<fieldset className="space-y-2"><legend className="font-medium">Members</legend>
-      {members.isPending&&<p role="status">Loading active members…</p>}{members.data?.map(member=><label className="flex gap-2" key={member.membershipId}><input type="checkbox" value={member.membershipId} {...register("membershipIds")}/><span>{member.displayName} ({member.email})</span></label>)}
-      {members.data?.length===0&&<p>No active members are available.</p>}
+      {members.isPending&&<p role="status">Loading active members…</p>}{members.error&&<ErrorState title="We couldn't load active members" description={errorMessage(members.error, "Try loading the member selection again.")} onRetry={() => void members.refetch()}/>} {members.data?.map(member=><label className="flex gap-2" key={member.membershipId}><input type="checkbox" value={member.membershipId} {...register("membershipIds")}/><span>{member.displayName} ({member.email})</span></label>)}
+      {members.data?.length===0&&<EmptyState icon={UsersRound} title="No active members are available" description="Invite or reactivate members before assigning this schedule to selected people."/>}
     </fieldset>}
     {save.error&&<p role="alert" className="text-destructive">{errorMessage(save.error)}</p>}
     <div className="flex gap-2"><Button type="submit" disabled={save.isPending}>{save.isPending?"Saving…":editing?"Save new revision":"Create schedule"}</Button>{editing&&<Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>}</div>

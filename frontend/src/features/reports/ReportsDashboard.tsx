@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { errorMessage } from "@/features/auth/auth-api"
+import { EmptyState } from "@/components/states/EmptyState"
+import { FileBarChart } from "lucide-react"
 import { useAuthStore } from "@/features/auth/auth-store"
 import { ReportExport } from "@/features/contributions/ReportExport"
 import { useReportDownload, type ReportKind, type ReportFormat } from "./report-hooks"
@@ -30,7 +32,7 @@ export function ReportsDashboard() {
         <label>To<input aria-label="History to" className="block rounded-lg border bg-background p-2" type="date" value={to} onChange={event => setTo(event.target.value)} /></label>
       </div>
       {!validRange && <p role="alert">Choose a valid date range.</p>}
-      {download.error && <p role="alert">{errorMessage(download.error)}</p>}
+      {download.error && <p role="alert" className="text-destructive">{errorMessage(download.error, "We couldn't download that report. Try exporting it again.")}</p>}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {available.map(item => <Card key={item.kind}>
           <CardHeader><CardTitle>{item.title}</CardTitle></CardHeader>
@@ -44,7 +46,7 @@ export function ReportsDashboard() {
           </CardContent>
         </Card>)}
       </div>
-      {available.length === 0 && <p>No additional reports are available for your permissions.</p>}
+      {available.length === 0 && <EmptyState icon={FileBarChart} title="No additional reports are available" description="Your current role does not include access to member, meeting, or voting exports. Ask a club administrator if you need one of these reports."/>}
     </section>
     <ReportExport />
   </div>

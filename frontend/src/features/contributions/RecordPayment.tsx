@@ -3,6 +3,9 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { errorMessage } from "@/features/auth/auth-api"
+import { EmptyState } from "@/components/states/EmptyState"
+import { ErrorState } from "@/components/states/ErrorState"
+import { BadgeCheck } from "lucide-react"
 import { useRecordableExpectations,useRecordPayment,useSendContributionReminder,type PaymentInput } from "./payment-hooks"
 
 function dateValue(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`}
@@ -18,8 +21,8 @@ export function RecordPayment(){
   useEffect(()=>{if(expectation)setValue("amount",Number(expectation.outstanding).toFixed(2))},[expectation,setValue])
   return <section className="space-y-3 rounded-xl border bg-card p-4">
     <div><h2 className="text-xl font-semibold">Record a payment</h2><p className="text-sm text-muted-foreground">Allocate a received payment to its exact member contribution.</p></div>
-    {expectations.isPending&&<p role="status">Loading outstanding contributions…</p>}{expectations.error&&<p role="alert">{errorMessage(expectations.error)}</p>}
-    {!expectations.isPending&&outstanding.length===0&&<p>No outstanding contributions are available in this calendar year.</p>}
+    {expectations.isPending&&<p role="status">Loading outstanding contributions…</p>}{expectations.error&&<ErrorState title="We couldn't load outstanding contributions" description={errorMessage(expectations.error, "Try loading the payment form again.")} onRetry={() => void expectations.refetch()}/>} 
+    {!expectations.isPending&&!expectations.error&&outstanding.length===0&&<EmptyState icon={BadgeCheck} title="No payments need recording" description="There are no outstanding contributions in this calendar year. New amounts will appear after a schedule creates expectations."/>}
     {outstanding.length>0&&<form className="space-y-4" onSubmit={handleSubmit(input=>expectation&&save.mutate({input:{...input,scheduleVersionId:expectation.scheduleVersionId,membershipId:expectation.membershipId,dueDate:expectation.dueDate},proof:(document.getElementById("payment-proof") as HTMLInputElement)?.files?.[0]},{onSuccess:()=>{reset({amount:Number(expectation.outstanding).toFixed(2),receivedOn:dateValue(),reference:"",note:""});const proof=document.getElementById("payment-proof") as HTMLInputElement;if(proof)proof.value=""}}))}>
       <label>Contribution<select className="block w-full rounded-lg border bg-background p-2" value={selectedKey} onChange={event=>setSelected(event.target.value)}>{outstanding.map(item=><option key={key(item)} value={key(item)}>{item.memberName} · {item.scheduleName} · due {item.dueDate} · R {Number(item.outstanding).toFixed(2)} outstanding</option>)}</select></label>
       <div className="grid gap-4 md:grid-cols-2">

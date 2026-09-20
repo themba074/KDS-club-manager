@@ -2,6 +2,8 @@ import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { errorMessage } from "@/features/auth/auth-api"
+import { EmptyState } from "@/components/states/EmptyState"
+import { FolderOpen } from "lucide-react"
 import { downloadDocument,useReplaceDocument,useUpdateDocument,type ClubDocument,type RoleOption } from "./document-hooks"
 
 function size(value:number){return value<1024?`${value} B`:value<1024*1024?`${(value/1024).toFixed(1)} KB`:`${(value/1024/1024).toFixed(1)} MB`}
@@ -17,4 +19,4 @@ function DocumentCard({document,roles,canManage}:{document:ClubDocument;roles:Ro
     {replace.error&&<p role="alert">{errorMessage(replace.error)}</p>}
   </article>
 }
-export function DocumentLibrary({documents,roles,canManage}:{documents:ClubDocument[];roles:RoleOption[];canManage:boolean}){return <section className="space-y-3"><h2 className="text-xl font-semibold">Document library</h2>{documents.length===0?<p>No documents are visible to you yet.</p>:documents.map(document=><DocumentCard key={document.id} document={document} roles={roles} canManage={canManage}/>)}</section>}
+export function DocumentLibrary({documents,roles,canManage}:{documents:ClubDocument[];roles:RoleOption[];canManage:boolean}){return <section className="space-y-3"><h2 className="text-xl font-semibold">Document library</h2>{documents.length===0?<EmptyState icon={FolderOpen} title="No documents are available yet" description={canManage?"Use the upload form above to share the club's first document and choose who may see it.":"Documents shared with your role will appear here."}/>:documents.map(document=><DocumentCard key={document.id} document={document} roles={roles} canManage={canManage}/>)}</section>}
