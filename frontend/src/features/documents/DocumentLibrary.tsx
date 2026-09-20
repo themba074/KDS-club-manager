@@ -68,7 +68,7 @@ function DocumentCard({
     );
   };
   return (
-    <article className="space-y-3 rounded-xl border bg-card p-4">
+    <article className="space-y-3 rounded-2xl border border-border/75 bg-card p-4 shadow-[0_1px_2px_oklch(0.2_0.03_160/4%)]">
       {confirmation}
       {validation && <p role="alert">{validation}</p>}
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -248,8 +248,8 @@ export function DocumentLibrary({
   canManage: boolean;
 }) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-xl font-semibold">Document library</h2>
+    <section className="space-y-4">
+      <h2 className="font-heading text-xl font-semibold tracking-tight">Document library</h2>
       {documents.length === 0 ? (
         <p>No documents are visible to you yet.</p>
       ) : (
