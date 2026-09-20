@@ -63,11 +63,11 @@ either of you can pick up the other's feature if it makes sense.
 
 - Feature 3 and the 8-character password minimum were originally committed
   at b66e90e.
-- Features #0–#18 are merged on `main`.
+- Features #0–#19 are merged on `main`.
 
 ## Current Build Status
-- Phase: Security review — Feature 19 audit in progress on
-  `feature/security-review`.
+- Phase: Deployment — Feature 20 staging delivery is in progress on
+  `feature/staging-deployment`.
 - Completed foundation work: repository flattened and initialized on
   `main`; `/backend` Spring Boot and `/frontend` Vite+React skeletons
   created.
@@ -140,9 +140,13 @@ either of you can pick up the other's feature if it makes sense.
 - Landed on `main`: #18 —
   cross-module member, meeting, and voting exports from permission-checked
   public service boundaries, with one snapshot feeding CSV and PDF.
-- In progress: #19 — checklist-driven security and tenant-isolation review;
-  findings require team review before security-sensitive fixes are applied.
-- Next after #19: #20 — Dockerized deployment and staging CI/CD.
+- Landed on `main`: #19 — checklist-driven security and tenant-isolation
+  review covering repositories, controllers, authentication, storage,
+  runtime configuration, and container boundaries. Open findings remain
+  tracked in `docs/SECURITY_REVIEW_FEATURE_19.md`.
+- In progress: #20 — production-shaped containers, fail-closed staging
+  configuration, and automatic staging deployment after `main` passes CI.
+- Next after #20: #21 — pilot onboarding polish.
 
 ## Do Not
 - Do not introduce a new state-management library beyond Zustand/TanStack
