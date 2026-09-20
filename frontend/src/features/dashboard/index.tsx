@@ -2,6 +2,7 @@ import { CalendarDays, HandCoins, TrendingUp, Users } from "lucide-react"
 
 import { PageLayout } from "@/components/layout/PageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { OnboardingChecklist } from "./OnboardingChecklist"
 
 const summaryCards = [
   { label: "Active members", value: "—", icon: Users },
@@ -16,6 +17,8 @@ export function DashboardPage() {
       title="Dashboard"
       description="A clear view of your club's membership, finances, and upcoming activity."
     >
+      <OnboardingChecklist />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon
