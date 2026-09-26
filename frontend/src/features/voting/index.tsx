@@ -1,6 +1,7 @@
 import { useConfirmation } from "@/components/ui/use-confirmation";
 import { useState } from "react";
-import { Vote } from "lucide-react";
+import { CheckCircle2, Clock3, Vote } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { usePermission } from "@/features/roles/use-permission";
@@ -107,21 +108,25 @@ export function VotingPage() {
   const canCast = usePermission("VOTES_CAST");
   const clubId = useAuthStore((state) => state.activeClub?.id);
   const motions = useMotions();
+  const open = motions.data?.filter((motion) => motion.state === "OPEN") ?? [];
+  const upcoming = motions.data?.filter((motion) => motion.state === "DRAFT") ?? [];
+  const closed = motions.data?.filter((motion) => motion.state === "CLOSED") ?? [];
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <Vote className="mb-2" />
-        <h1 className="text-3xl font-bold">Voting</h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm font-medium text-primary">Club governance</p>
+        <h1 className="mt-1 font-heading text-3xl font-semibold tracking-[-0.035em]">Voting</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           Create motions, cast one-time ballots, and publish final results.
         </p>
       </div>
+      {motions.data && <div className="grid gap-4 sm:grid-cols-3"><Card><CardHeader className="flex-row items-center justify-between"><CardTitle>Open motions</CardTitle><Vote className="size-5 text-primary" aria-hidden="true" /></CardHeader><CardContent><p className="text-3xl font-semibold">{open.length}</p><p className="mt-1 text-sm text-muted-foreground">Available to eligible voters</p></CardContent></Card><Card><CardHeader className="flex-row items-center justify-between"><CardTitle>Draft motions</CardTitle><Clock3 className="size-5 text-amber-600" aria-hidden="true" /></CardHeader><CardContent><p className="text-3xl font-semibold">{upcoming.length}</p><p className="mt-1 text-sm text-muted-foreground">Awaiting a voting window</p></CardContent></Card><Card><CardHeader className="flex-row items-center justify-between"><CardTitle>Closed motions</CardTitle><CheckCircle2 className="size-5 text-primary" aria-hidden="true" /></CardHeader><CardContent><p className="text-3xl font-semibold">{closed.length}</p><p className="mt-1 text-sm text-muted-foreground">Results ready to review</p></CardContent></Card></div>}
       {canCreate && <CreateMotion key={clubId} />}
       {motions.isPending && <p role="status">Loading motions…</p>}
       {motions.error && (
         <ErrorState title="We couldn't load club motions" description={errorMessage(motions.error, "Try loading the voting list again.")} onRetry={() => void motions.refetch()} />
       )}
-      <section className="space-y-3">
+      <section className="space-y-4">
         <h2 className="text-xl font-semibold">Motions</h2>
         {motions.data?.length === 0 && <EmptyState icon={Vote} title="No motions yet" description={canCreate?"Use the form above when the club needs to discuss and vote on a decision.":"When an authorised member creates a motion, it will appear here."} />}
         {motions.data?.map((motion) => (

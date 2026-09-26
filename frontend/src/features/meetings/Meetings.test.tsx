@@ -121,6 +121,24 @@ it("shows upcoming and past sections to read-only members", async () => {
   expect(
     screen.queryByRole("button", { name: "Edit meeting" }),
   ).not.toBeInTheDocument();
+  expect(
+    screen.getByText(/RSVP totals are available to meeting managers/),
+  ).toBeInTheDocument();
+  expect(
+    get.mock.calls.some(([path]) => String(path).endsWith("/rsvp")),
+  ).toBe(false);
+});
+it("shows an error instead of an empty RSVP state when manager totals fail to load", async () => {
+  get.mockImplementation((path: string, config?: { params?: { view: string } }) => {
+    if (path.endsWith("/rsvp")) return Promise.reject(new Error("offline"));
+    if (path === "/meetings") return Promise.resolve({ data: config?.params?.view === "UPCOMING" ? [upcoming] : [past] });
+    if (path.endsWith("/minutes")) return Promise.resolve({ data: draft });
+    return Promise.resolve({ data: {} });
+  });
+  page();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Meeting failed");
+  expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  expect(screen.queryByText("No RSVP responses yet.")).not.toBeInTheDocument();
 });
 it("creates a meeting with agenda in the displayed order", async () => {
   page();
